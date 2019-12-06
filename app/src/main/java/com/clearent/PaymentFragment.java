@@ -466,12 +466,6 @@ public class PaymentFragment extends ActionBarActivity {
                             }
                             break;
                         case 1:
-                            if (device.device_setDeviceType(DEVICE_TYPE.DEVICE_VP3300_AJ_USB))
-                                Toast.makeText(getActivity(), "VP3300 Audio Jack (USB) is selected", Toast.LENGTH_SHORT).show();
-                            else
-                                Toast.makeText(getActivity(), "Failed. Please disconnect first.", Toast.LENGTH_SHORT).show();
-                            break;
-                        case 2:
                             if (device.device_setDeviceType(DEVICE_TYPE.DEVICE_VP3300_BT)) {
                                 Toast.makeText(getActivity(), "VP3300 Bluetooth (Bluetooth) is selected", Toast.LENGTH_SHORT).show();
                                 dlgBTLE_Name = new Dialog(getActivity());
@@ -510,22 +504,6 @@ public class PaymentFragment extends ActionBarActivity {
                                 isBluetoothScanning = false;
                             } else
                                 Toast.makeText(getActivity(), "Failed. Please disconnect first.", Toast.LENGTH_SHORT).show();
-                            break;
-                        case 3:
-                            if (device.device_setDeviceType(DEVICE_TYPE.DEVICE_VP3300_BT_USB))
-                                Toast.makeText(getActivity(), "VP3300 Bluetooth (USB) is selected", Toast.LENGTH_SHORT).show();
-                            else
-                                Toast.makeText(getActivity(), "Failed. Please disconnect first.", Toast.LENGTH_SHORT).show();
-                            break;
-                        case 4:
-                            if (device.device_setDeviceType(DEVICE_TYPE.DEVICE_VP3300_USB)) {
-                                applyClearentConfiguration = false;
-                                btleDeviceRegistered = false;
-                                isBluetoothScanning = false;
-                                Toast.makeText(getActivity(), "VP3300 USB is selected", Toast.LENGTH_SHORT).show();
-                            } else {
-                                Toast.makeText(getActivity(), "Failed. Please disconnect first.", Toast.LENGTH_SHORT).show();
-                            }
                             break;
                     }
 
@@ -573,7 +551,7 @@ public class PaymentFragment extends ActionBarActivity {
                 btleDeviceRegistered = false;
                 isBluetoothScanning = false;
                 isReady = false;
-                //handler.post(doTransactionAlert);
+
                 displayTransactionPopup();
                 if (!mBtAdapter.isEnabled()) {
                     Log.i("CLEARENT", "Adapter");
@@ -649,24 +627,11 @@ public class PaymentFragment extends ActionBarActivity {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            // if (currentBluetoothDevice != null) {
-            //   System.out.println("scanforDevice:doRegisterListen with current bluetooth device");
-            // device.registerListen();
-            //handler.post(doRegisterListen);
-            //} else {
+
             btleDeviceRegistered = false;
             bleRetryCount = 0;
             scanLeDevice(true, timeout);
-            // }
         }
-
-//        Handler scanProgressBarHandle = new Handler() {
-//            @Override
-//            public void handleMessage(Message msg) {
-//                super.handleMessage(msg);
-//                waitForReaderIsReadyProgressDialog.incrementProgressBy(1);
-//            }
-//        };
 
         private void scanLeDevice(final boolean enable, final long timeout) {
             if (enable) {
@@ -769,135 +734,6 @@ public class PaymentFragment extends ActionBarActivity {
             }
         };
 
-        private String[] fw_commands = null;
-
-        void openReaderSelectDialogForFwUpdate() {
-            if (device.device_getDeviceType() != DEVICE_TYPE.DEVICE_VP3300_AJ_USB && device.device_getDeviceType() != DEVICE_TYPE.DEVICE_VP3300_USB &&
-                    device.device_getDeviceType() != DEVICE_TYPE.DEVICE_VP3300_BT_USB && device.device_getDeviceType() != DEVICE_TYPE.DEVICE_VP3300_COM) {
-                Toast.makeText(getActivity(), "Only support VP3300 through USB and RS232", Toast.LENGTH_LONG).show();
-                return;
-            }
-
-            if (isFwInitDone) {
-                Toast.makeText(getActivity(), "FW update initialization was done, please update FW now", Toast.LENGTH_LONG).show();
-                return;
-            }
-            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-            builder.setTitle("Select a device:");
-            builder.setCancelable(true);
-
-            builder.setItems(R.array.fw_reader_type, new DialogInterface.OnClickListener() {
-
-                public void onClick(DialogInterface dialog, int which) {
-
-                    String fileNames[] = {"vp3300_aj_firmware_064.txt", "vp3300_bt_firmware_090.txt", "IDT_Firmware_VP3300_USB.txt", "IDT_Firmware_VP3300_COM.txt"};
-
-                    // to refer to the application path
-                    File fileDir = getActivity().getFilesDir();
-                    String fileName = fileDir.getParent() + java.io.File.separator + fileDir.getName();
-                    // String path = Environment.getExternalStorageDirectory().toString();
-                    String fileNameWithPath = fileName + java.io.File.separator + fileNames[which];
-                    info += "fileNameWithPath: " + fileNameWithPath + "";
-                    fw_commands = getStringArrayFromFirmwareTXTFile(fileNameWithPath);
-
-                    if (fw_commands == null || fw_commands.length == 0) {
-                        Toast.makeText(getActivity(), "Please check if \"" + fileNames[which] + "\" is located in the root directory.", Toast.LENGTH_LONG).show();
-                        return;
-                    } else {
-                        int i;
-                        for (i = 0; i < fw_commands.length; i++) {
-                            if (fw_commands[i] != null)
-                                break;
-                        }
-                        if (i == fw_commands.length) {
-                            Toast.makeText(getActivity(), "Please check if \"" + fileNames[which] + "\" contains correct data.", Toast.LENGTH_LONG).show();
-                            return;
-                        }
-                    }
-
-                    int ret = device.device_updateFirmware(fw_commands);
-                    if (ret == ErrorCode.SUCCESS) {
-                        info = "Initialize firmware update...";
-                        swipeButton.setEnabled(false);
-                        Toast.makeText(getActivity(), "FW update started initialization.", Toast.LENGTH_SHORT).show();
-                    } else {
-                        info += "updatefirmware failed: " + device.device_getResponseCodeString(ret) + "";
-                        Toast.makeText(getActivity(), "FW update initialization cannot be started.", Toast.LENGTH_LONG).show();
-                    }
-                    handler.post(doUpdateStatus);
-                }
-            });
-            builder.create().show();
-        }
-
-        private String[] getStringArrayFromFirmwareTXTFile(String strFilePathName) {
-
-            File file = new File(strFilePathName);
-            if (file.exists() == false)
-                return null;
-
-            String[] cmds;
-            int count = 0;
-            BufferedReader br = null;
-            try {
-                br = new BufferedReader(new FileReader(file));
-                String line = "";
-
-                while ((line = br.readLine()) != null && !line.equalsIgnoreCase("END>")) {
-                    count++;
-                }
-                count++;
-                br.close();
-                br = null;
-
-                br = new BufferedReader(new FileReader(file));
-                line = "";
-
-                cmds = new String[count];
-
-                for (int i = 0; i < count; i++) {
-                    line = br.readLine();
-                    if (line != null)
-                        cmds[i] = new String(line);
-                }
-            } catch (IOException e) {
-                return null;
-            } finally {
-                try {
-                    if (br != null)
-                        br.close();
-                } catch (Exception ex) {
-                    return null;
-                }
-            }
-            return cmds;
-        }
-
-        void continueFirmwareUpdate() {
-            if (!Common.getBootLoaderMode()) {
-                Toast.makeText(getActivity(), "Please initialize firmware update first.", Toast.LENGTH_LONG).show();
-                return;
-            }
-
-            int ret = device.device_updateFirmware(fw_commands);
-            if (ret == ErrorCode.SUCCESS) {
-                swipeButton.setEnabled(false);
-                Toast.makeText(getActivity(), "FW update started.", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(getActivity(), "FW update cannot be started.", Toast.LENGTH_LONG).show();
-                detail = "";
-                handler.post(doUpdateStatus);
-            }
-        }
-
-        Dialog dlgMenu;
-        Dialog dlgLanguageMenu;
-        byte type;
-        String[] theLines;
-        byte[] Language;
-        byte MessageId;
-        int finalTimout;
-
         public void lcdDisplay(int mode, final String[] lines, int timeout) {
             if (lines != null && lines.length > 0) {
                 getActivity().runOnUiThread(new Runnable() {
@@ -909,9 +745,6 @@ public class PaymentFragment extends ActionBarActivity {
                         Log.i("WATCH1", lines[0]);
                         info += lines[0] + "\n";
                         handler.post(doUpdateStatus);
-//                        if (waitForReaderIsReadyProgressDialog != null && waitForReaderIsReadyProgressDialog.isShowing()) {
-//                            waitForReaderIsReadyProgressDialog.setMessage(lines[0]);
-                        // } else if (transactionAlertDialog != null && transactionAlertDialog.isShowing()) {
                         if (transactionAlertDialog != null && transactionAlertDialog.isShowing()) {
                             transactionAlertDialog.setMessage(lines[0]);
                             String checkTransactionMessage = "Sample Transaction successful. Transaction Id:";

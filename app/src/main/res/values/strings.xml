@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     
-    <string name="app_name">ID Tech VP3300 Demo 116.1.0.0</string>
+    <string name="app_name">Clearent IDTech JDemo 1.126.0</string>
     <string name="location">Location</string>
     <string name="cant_read_folder">folder can\'t be read!</string>
     <string name="nnew">New</string>
@@ -32,7 +32,7 @@
     <string name="lbl_manual_card">Manual</string>
     <string name="lbl_command">Command</string>
     <string name="lbl_cancel">Cancel</string>
-    <string name="logoDesc">ID Tech Logo</string>
+    <string name="logoDesc">Clearent Logo</string>
     
     <string-array name="reader_type">
         <item>VP3300 Audio Jack (Audio Jack)</item>

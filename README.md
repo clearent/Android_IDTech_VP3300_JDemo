@@ -1,5 +1,5 @@
 ## Android_IDTech_VP3300_JDemo
 
-This java demo demonstrates a common integration to the Clearent IDTech framework allowing you to takes payments from an Android device.
+:new: This demo shows a common way to interact with the clearent idtech framework without all of the framework capabilities our other demo shows.
 
-[Our SDK](https://github.com/clearent/android-idtech-sdk)
+This demo uses our new contactless release that's in beta. We have not released yet (soon).

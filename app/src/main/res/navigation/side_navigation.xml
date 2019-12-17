@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/side_navigation"
+    app:startDestination="@+id/nav_charge">
+
+    <fragment
+        android:id="@+id/nav_charge"
+        android:name="com.clearent.ui.payment.PaymentFragment"
+        android:label="@string/menu_charge"
+        tools:layout="@layout/fragment_payment" />
+
+    <fragment
+        android:id="@+id/nav_configure"
+        android:name="com.clearent.ui.tools.ConfigureFragment"
+        android:label="@string/menu_configure"
+        tools:layout="@layout/fragment_configure" />
+
+</navigation>

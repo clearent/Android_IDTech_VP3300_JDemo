@@ -104,6 +104,7 @@ public class ConfigureFragment extends Fragment implements PublicOnReceiverListe
         final TextView publicKeyTextView = root.findViewById(R.id.settings_publickey);
         publicKeyTextView.setText(Constants.PUBLIC_KEY);
 
+        updateReaderConnected("Reader Disconnected ❌");
 
         return root;
     }
@@ -228,12 +229,12 @@ public class ConfigureFragment extends Fragment implements PublicOnReceiverListe
 
     @Override
     public void deviceConnected() {
-        updateReaderConnected("Reader Connected ❤️");
+        updateReaderConnected("Reader Connected \uD83D\uDC9A️");
     }
 
     @Override
     public void deviceDisconnected() {
-        updateReaderConnected("Reader Disconnected \uD83D\uDCA2");
+        updateReaderConnected("Reader Disconnected ❌");
     }
 
     @Override
@@ -683,9 +684,13 @@ public class ConfigureFragment extends Fragment implements PublicOnReceiverListe
         cardReaderService.addRemoteLogRequest("Android_IDTech_VP3300_JDemo", "Initialized the VP3300 For Configuration");
     }
 
-
-    private void updateReaderConnected(String message) {
-        final TextView readerConnectView = root.findViewById(R.id.readerConnected);
-        readerConnectView.setText(message);
+    private void updateReaderConnected(final String message) {
+        getActivity().runOnUiThread(new Runnable() {
+            public void run() {
+                final TextView readerConnectView = root.findViewById(R.id.readerConnected);
+                readerConnectView.setText(message);
+            }
+        });
     }
+
 }

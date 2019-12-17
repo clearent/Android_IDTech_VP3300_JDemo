@@ -12,7 +12,6 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#ffffff"
         android:orientation="vertical">
 
         <LinearLayout
@@ -20,7 +19,6 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:background="#dddddd"
             android:focusable="true"
             android:focusableInTouchMode="true"
             android:orientation="vertical">
@@ -35,7 +33,6 @@
                     android:id="@+id/readerConnected"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="numberDecimal"
                     android:text="Reader Disconnected" />
             </LinearLayout>
 
@@ -45,14 +42,18 @@
 
             <LinearLayout
                 android:id="@+id/linearLayoutBottom3"
-                android:layout_width="match_parent"
+                android:layout_width="176dp"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center"
                 android:layout_marginTop="10dp">
 
                 <Button
                     android:id="@+id/btn_connect"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:backgroundTint="@color/clearentBlue"
+                    android:drawableLeft="@drawable/ic_bluetooth"
+                    android:onClick="@color/clearentGreen"
                     android:text="@string/lbl_connect" />
 
             </LinearLayout>
@@ -62,28 +63,28 @@
                 android:layout_height="20dp" />
 
             <LinearLayout
-                android:layout_width="match_parent"
+                android:layout_width="209dp"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
 
-            <TextView
-                android:id="@+id/labelAmount"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentLeft="true"
-                android:layout_alignParentTop="true"
-                android:text="Amount" />
+                <TextView
+                    android:id="@+id/labelAmount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentLeft="true"
+                    android:layout_alignParentTop="true"
+                    android:text="Amount" />
 
-            <EditText
-                android:id="@+id/textAmount"
-                android:layout_width="100dp"
-                android:layout_height="wrap_content"
-                android:layout_alignParentTop="true"
-                android:layout_marginLeft="10dp"
-                android:inputType="numberDecimal"
-                android:layout_toRightOf="@+id/labelAmount"
-                android:background="@drawable/rounded_corner"
-                android:text="" />
+                <EditText
+                    android:id="@+id/textAmount"
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentTop="true"
+                    android:layout_marginLeft="10dp"
+                    android:layout_toRightOf="@+id/labelAmount"
+                    android:background="@drawable/rounded_corner"
+                    android:inputType="numberDecimal"
+                    android:text="" />
 
             </LinearLayout>
 
@@ -106,13 +107,12 @@
 
                 <EditText
                     android:id="@+id/customerEmailAddress"
-                    android:layout_width="243dp"
+                    android:layout_width="282dp"
                     android:layout_height="wrap_content"
                     android:layout_alignParentTop="true"
                     android:layout_marginLeft="10dp"
                     android:layout_toRightOf="@+id/labelEmail"
                     android:background="@drawable/rounded_corner"
-                    android:inputType="numberDecimal"
                     android:text="" />
 
             </LinearLayout>
@@ -231,14 +231,17 @@
 
         <LinearLayout
             android:id="@+id/linearLayoutBottom"
-            android:layout_width="match_parent"
+            android:layout_width="159dp"
             android:layout_height="wrap_content"
+            android:layout_gravity="center"
             android:layout_marginTop="10dp">
 
             <Button
                 android:id="@+id/btn_swipeCard"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:backgroundTint="@color/clearentBlue"
+                android:drawableLeft="@drawable/ic_credit_card"
                 android:text="@string/lbl_swipe_card" />
 
         </LinearLayout>

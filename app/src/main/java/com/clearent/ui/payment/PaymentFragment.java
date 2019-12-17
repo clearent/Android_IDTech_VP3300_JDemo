@@ -118,6 +118,8 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
 
         bindButtons(root);
 
+        updateReaderConnected("Reader Disconnected ❌");
+
         return root;
     }
 
@@ -185,7 +187,6 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
             }
         });
 
-
         configureViewModel.getClearContactlessConfigurationCache().observe(this, new Observer<Boolean>() {
             @Override
             public void onChanged(Boolean enabled) {
@@ -195,9 +196,24 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
 
     }
 
-    private void updateReaderConnected(String message) {
-        final TextView readerConnectView = root.findViewById(R.id.readerConnected);
-        readerConnectView.setText(message);
+    private void updateReaderConnected(final String message) {
+        getActivity().runOnUiThread(new Runnable() {
+            public void run() {
+                if (transactionAlertDialog != null && transactionAlertDialog.isShowing()) {
+                    transactionAlertDialog.setMessage("Bluetooth disconnected. Press button on reader.");
+                }
+                final TextView readerConnectView = root.findViewById(R.id.readerConnected);
+                readerConnectView.setText(message);
+            }
+        });
+    }
+
+    private void hideConnectionDialog() {
+        getActivity().runOnUiThread(new Runnable() {
+            public void run() {
+                connectionDialog.hide();
+            }
+        });
     }
 
     private void bindButtons(View root) {
@@ -257,8 +273,8 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
     @Override
     public void isReady() {
         if(connectingToBluetooth && connectionDialog != null && connectionDialog.isShowing()) {
-            updateReaderConnected("Reader Connected ❤️");
-            connectionDialog.hide();
+            updateReaderConnected("Reader Connected \uD83D\uDC9A️");
+            hideConnectionDialog();
             connectingToBluetooth = false;
             return;
         }
@@ -831,6 +847,7 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
         }
     };
 
+
     private Runnable doStartTransaction = new Runnable() {
         @Override
         public void run() {
@@ -988,7 +1005,8 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
                 }
             }
         });
-        updateReaderConnected("Reader Disconnected \uD83D\uDCA2");
+        updateReaderConnected("Reader Disconnected ❌");
+
         isReady = false;
     }
 

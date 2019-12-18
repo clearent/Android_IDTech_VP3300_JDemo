@@ -357,6 +357,7 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
                 } else {
                     addPopupMessage(transactionAlertDialog, "Please remove card");
                 }
+                addPopupMessage(transactionAlertDialog, "Running transaction");
             }
             handler.post(doUpdateStatus);
             swipeButton.setEnabled(true);
@@ -644,7 +645,7 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
                         btleDeviceRegistered = false;
                         bleRetryCount++;
                         if (bleRetryCount <= Constants.BLE_MAX_SCAN_TRIES) {
-                            if (transactionAlertDialog.isShowing()) {
+                            if (transactionAlertDialog != null && transactionAlertDialog.isShowing()) {
                                 addPopupMessage(transactionAlertDialog, "Connecting to bluetooth... " + bleRetryCount);
                             }
                             info += "\nTrying again ";
@@ -653,7 +654,7 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
                         } else {
                             info += "\nFailed to connect to bluetooth device.";
                             handler.post(doUpdateStatus);
-                            if (transactionAlertDialog.isShowing()) {
+                            if (transactionAlertDialog != null && transactionAlertDialog.isShowing()) {
                                 addPopupMessage(transactionAlertDialog, "Failed to connect to bluetooth. Cancel and Try again");
                             }
                         }
@@ -952,13 +953,14 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
                 initCardReaderService();
             }
 
+            closePopup();
+
             if (isManualCardEntry()) {
                 runningManualEntry = true;
                 displayTransactionPopup();
                 CreditCard creditCard = manualEntryService.createCreditCard(paymentViewModel.getCardNumber().getValue(), paymentViewModel.getCardExpirationDate().getValue(), paymentViewModel.getCardCVV().getValue());
                 manualEntryService.createTransactionToken(creditCard);
             } else if (cardReaderService.device_isConnected()) {
-                closePopup();
                 String amount = paymentViewModel.getPaymentAmount().getValue();
                 if(amount == null || "".equals(amount)) {
                     Toast.makeText(getActivity(), "Amount Required", Toast.LENGTH_LONG).show();

@@ -126,6 +126,7 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
     @Override
     public void onPause(){
         super.onPause();
+        releaseSDK();
         updateViewModel();
     }
 
@@ -716,8 +717,8 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
                     handler.post(doUpdateStatus);
                     if (transactionAlertDialog != null && transactionAlertDialog.isShowing()) {
                         transactionAlertDialog.setMessage(lines[0]);
-                        String checkTransactionMessage = "Payment success. Transaction Id:";
-                        String checkReceiptMessage = "Sample receipt sent successfully";
+                        String checkTransactionMessage = "Transaction successful. Transaction Id:";
+                        String checkReceiptMessage = "Receipt sent successfully";
                         String checkFailedTransactionFailed = "Payment failed";
                         if (lines[0].contains(checkFailedTransactionFailed)) {
                             if (transactionAlertDialog != null && transactionAlertDialog.isShowing()) {
@@ -733,6 +734,7 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
                             showPaymentSuccess(lines[0]);
                             runSampleReceipt(lines[0]);
                         } else if (lines[0].contains(checkReceiptMessage)) {
+                            Toast.makeText(getActivity(), "Sent Receipt", Toast.LENGTH_LONG).show();
                             if (transactionAlertDialog != null && transactionAlertDialog.isShowing()) {
                                 transactionAlertDialog.hide();
                             }
@@ -746,9 +748,14 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
     private void runSampleReceipt(String line) {
         String[] parts = line.split(":");
         ReceiptRequest receiptRequest = new ReceiptRequest();
-        receiptRequest.setApiKey(Constants.API_KEY_FOR_DEMO_ONLY);
-        receiptRequest.setBaseUrl(getPaymentsBaseUrl());
+        receiptRequest.setApiKey(settingsApiKey);
+        String baseUrl = Constants.BASE_URL;
+        if (settingsProdEnvironment) {
+            baseUrl = Constants.PROD_BASE_URL;
+        }
+        receiptRequest.setBaseUrl(baseUrl);
         ReceiptDetail receiptDetail = new ReceiptDetail();
+        System.out.println(paymentViewModel.getCustomerEmailAddress().getValue());
         receiptDetail.setEmailAddress(paymentViewModel.getCustomerEmailAddress().getValue());
         receiptDetail.setTransactionId(parts[1]);
         receiptRequest.setReceiptDetail(receiptDetail);
@@ -797,7 +804,7 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
             cardReaderService.unregisterListen();
             cardReaderService.release();
             try {
-                Thread.sleep(5000);
+                Thread.sleep(2000);
             } catch (InterruptedException e) {
                 //do nothing
             }
@@ -855,6 +862,9 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
 
             String amount = paymentViewModel.getPaymentAmount().getValue();
             ClearentPaymentRequest clearentPaymentRequest = new ClearentPaymentRequest(Double.valueOf(amount), 0.00, 0, 60, null);
+
+            System.out.println(paymentViewModel.getCustomerEmailAddress().getValue());
+
             clearentPaymentRequest.setEmailAddress(paymentViewModel.getCustomerEmailAddress().getValue());
 
             int ret = 0;

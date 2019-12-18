@@ -48,7 +48,7 @@ public class PostReceiptTask extends AsyncTask<Void, Void, ClearentReceiptRespon
 
                 int httpResult = httpsURLConnection.getResponseCode();
                 if (httpResult == 200) {
-                    clearentReceiptResponse = new ClearentReceiptResponse("Sample receipt sent successfully");
+                    clearentReceiptResponse = new ClearentReceiptResponse("Receipt sent successfully");
                 } else  {
                     clearentReceiptResponse = createGenericErrorResponse();
                 }
@@ -63,7 +63,7 @@ public class PostReceiptTask extends AsyncTask<Void, Void, ClearentReceiptRespon
     }
 
     private ClearentReceiptResponse createGenericErrorResponse() {
-        return new ClearentReceiptResponse("Failed to send sample receipt");
+        return new ClearentReceiptResponse("Failed to send receipt");
     }
 
     private void createHttpsURLConnection() throws IOException {

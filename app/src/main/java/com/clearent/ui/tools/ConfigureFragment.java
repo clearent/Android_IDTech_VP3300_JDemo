@@ -112,7 +112,20 @@ public class ConfigureFragment extends Fragment implements PublicOnReceiverListe
     @Override
     public void onPause() {
         super.onPause();
+        releaseSDK();
         updateViewModel();
+    }
+
+    public void releaseSDK() {
+        if (cardReaderService != null) {
+            cardReaderService.unregisterListen();
+            cardReaderService.release();
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                //do nothing
+            }
+        }
     }
 
     private void bindButtons(View root) {

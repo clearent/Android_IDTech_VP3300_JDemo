@@ -107,7 +107,7 @@ public class PostTransactionTask extends AsyncTask<Void, Void, ClearentTransacti
     }
 
     ClearentSuccessTransactionResponse getSuccessfulResponse(String responseAsJson) {
-        Log.i("CLEARENT", "Good sample transaction response " + responseAsJson);
+        Log.i("CLEARENT", "Good transaction response " + responseAsJson);
         ClearentSuccessTransactionResponse clearentSuccessTransactionResponse = new ClearentSuccessTransactionResponse();
         try {
             Gson gson = new Gson();
@@ -119,7 +119,7 @@ public class PostTransactionTask extends AsyncTask<Void, Void, ClearentTransacti
     }
 
     ClearentErrorTransactionResponse getBadResponse(String responseAsJson) {
-        Log.i("CLEARENT", "Bad sample transaction response " + responseAsJson);
+        Log.i("CLEARENT", "Bad transaction response " + responseAsJson);
         ClearentErrorTransactionResponse clearentErrorTransactionResponse = new ClearentErrorTransactionResponse();
         try {
             Gson gson = new Gson();

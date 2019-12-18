@@ -19,7 +19,7 @@
                 android:id="@+id/readerConnected"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-
+                android:layout_marginTop="10dp"
                 android:text="Reader Disconnected" />
 
             <TextView
@@ -29,7 +29,13 @@
                 android:layout_gravity="center_horizontal"
                 android:padding="10dp"
                 android:text="General"
+                android:fontFamily="sans-serif-black"
                 android:textStyle="bold" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@android:color/darker_gray"/>
 
         </LinearLayout>
 
@@ -57,6 +63,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:fontFamily="sans-serif-light"
+                    android:textStyle="bold"
                     android:checked="true"
                     android:tag="SANDBOX"
                     android:buttonTint="@color/clearentGreen"
@@ -68,6 +76,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:fontFamily="sans-serif-light"
+                    android:textStyle="bold"
                     android:tag="PROD"
                     android:buttonTint="@color/clearentGreen"
                     android:text="Prod" />
@@ -89,6 +99,8 @@
                     android:layout_height="wrap_content"
                     android:layout_alignParentLeft="true"
                     android:layout_alignParentTop="true"
+                    android:fontFamily="sans-serif-light"
+                    android:textStyle="bold"
                     android:labelFor="@+id/settings_apikey"
                     android:text="ApiKey" />
 
@@ -118,6 +130,8 @@
                     android:layout_height="wrap_content"
                     android:layout_alignParentLeft="true"
                     android:layout_alignParentTop="true"
+                    android:fontFamily="sans-serif-light"
+                    android:textStyle="bold"
                     android:labelFor="@+id/settings_publickey"
                     android:text="Public Key" />
 
@@ -150,38 +164,46 @@
                     android:layout_gravity="center_horizontal"
                     android:padding="10dp"
                     android:text="Reader"
+                    android:fontFamily="sans-serif-black"
                     android:textStyle="bold" />
 
-               <!-- <LinearLayout
+                <View
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                    android:layout_height="1dp"
+                    android:background="@android:color/darker_gray"/>
 
-                    <TextView
-                        android:id="@+id/settings_label_readerLast5"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignParentLeft="true"
-                        android:layout_alignParentTop="true"
-                        android:labelFor="@+id/settings_readerLast5"
-                        android:text="DSN Last 5" />
+                <!-- <LinearLayout
+                     android:layout_width="match_parent"
+                     android:layout_height="wrap_content"
+                     android:orientation="horizontal">
 
-                    <EditText
-                        android:id="@+id/settings_readerLast5"
-                        android:layout_width="281dp"
-                        android:layout_height="wrap_content"
-                        android:layout_alignParentTop="true"
-                        android:layout_marginLeft="10dp"
-                        android:layout_toRightOf="@+id/settings_label_readerLast5"
-                        android:background="@drawable/rounded_corner"
-                        android:hint="last 5 of device serial number" />
-                </LinearLayout>-->
+                     <TextView
+                         android:id="@+id/settings_label_readerLast5"
+                         android:layout_width="wrap_content"
+                         android:layout_height="wrap_content"
+                         android:layout_alignParentLeft="true"
+                         android:layout_alignParentTop="true"
+                         android:labelFor="@+id/settings_readerLast5"
+                         android:text="DSN Last 5" />
+
+                     <EditText
+                         android:id="@+id/settings_readerLast5"
+                         android:layout_width="281dp"
+                         android:layout_height="wrap_content"
+                         android:layout_alignParentTop="true"
+                         android:layout_marginLeft="10dp"
+                         android:layout_toRightOf="@+id/settings_label_readerLast5"
+                         android:background="@drawable/rounded_corner"
+                         android:hint="last 5 of device serial number" />
+                 </LinearLayout>-->
 
                 <CheckBox
                     android:id="@+id/checkboxAutoConfigure"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:checked="false"
+                    android:fontFamily="sans-serif-light"
+                    android:textStyle="bold"
                     android:buttonTint="@color/clearentGreen"
                     android:text="Configure Contact/Dip" />
 
@@ -194,6 +216,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:checked="false"
+                    android:fontFamily="sans-serif-light"
+                    android:textStyle="bold"
                     android:buttonTint="@color/clearentGreen"
                     android:text="Configure Contactless" />
 
@@ -206,6 +230,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:checked="false"
+                    android:fontFamily="sans-serif-light"
+                    android:textStyle="bold"
                     android:buttonTint="@color/clearentGreen"
                     android:text="Clear App Knowledge of Previous Contact/Dip Configuration" />
 
@@ -219,6 +245,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:checked="false"
+                    android:fontFamily="sans-serif-light"
+                    android:textStyle="bold"
                     android:buttonTint="@color/clearentGreen"
                     android:text="Clear App Knowledge of Previous Contactless Configuration" />
 
@@ -231,6 +259,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:checked="true"
+                    android:fontFamily="sans-serif-light"
+                    android:textStyle="bold"
                     android:buttonTint="@color/clearentGreen"
                     android:text="Enable Contactless" />
 
@@ -242,6 +272,8 @@
                     android:id="@+id/enable2In1Mode"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-light"
+                    android:textStyle="bold"
                     android:buttonTint="@color/clearentGreen"
                     android:text="Enable 2 in 1 mode (dip/swipe only)" />
 

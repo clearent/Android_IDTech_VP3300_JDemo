@@ -41,7 +41,7 @@ import com.clearent.payment.SampleReceipt;
 import com.clearent.payment.SampleReceiptImpl;
 import com.clearent.payment.SampleTransaction;
 import com.clearent.payment.SampleTransactionImpl;
-import com.clearent.ui.tools.ConfigureViewModel;
+import com.clearent.ui.tools.SettingsViewModel;
 import com.idtechproducts.device.Common;
 import com.idtechproducts.device.ErrorCode;
 import com.idtechproducts.device.ErrorCodeInfo;
@@ -70,7 +70,7 @@ import androidx.lifecycle.ViewModelProviders;
 public class PaymentFragment extends Fragment implements PublicOnReceiverListener, HasManualTokenizingSupport {
 
     private PaymentViewModel paymentViewModel;
-    private ConfigureViewModel configureViewModel;
+    private SettingsViewModel settingsViewModel;
     private boolean isBluetoothScanning = false;
     private static final int REQUEST_ENABLE_BT = 1;
     private BluetoothAdapter mBtAdapter = null;
@@ -110,8 +110,8 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
                              ViewGroup container, Bundle savedInstanceState) {
         paymentViewModel =
                 ViewModelProviders.of(getActivity()).get(PaymentViewModel.class);
-        configureViewModel =
-                ViewModelProviders.of(getActivity()).get(ConfigureViewModel.class);
+        settingsViewModel =
+                ViewModelProviders.of(getActivity()).get(SettingsViewModel.class);
         root = inflater.inflate(R.layout.fragment_payment, container, false);
 
         observeConfigurationValues(root);
@@ -131,64 +131,64 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
     }
 
     private void observeConfigurationValues(final View root) {
-        configureViewModel.getApiKey().observe(getActivity(), new Observer<String>() {
+        settingsViewModel.getApiKey().observe(getActivity(), new Observer<String>() {
             @Override
             public void onChanged(@Nullable String s) {
                 settingsApiKey = s;
             }
         });
-        configureViewModel.getPublicKey().observe(getActivity(), new Observer<String>() {
+        settingsViewModel.getPublicKey().observe(getActivity(), new Observer<String>() {
             @Override
             public void onChanged(@Nullable String s) {
                 settingsPublicKey = s;
             }
         });
 
-        configureViewModel.getProdEnvironment().observe(getActivity(), new Observer<Integer>() {
+        settingsViewModel.getProdEnvironment().observe(getActivity(), new Observer<Integer>() {
             @Override
             public void onChanged(Integer onOff) {
                 settingsProdEnvironment = onOff == 0 ? false : true;
             }
         });
 
-        configureViewModel.getBluetoothReader().observe(getActivity(), new Observer<Integer>() {
+        settingsViewModel.getBluetoothReader().observe(getActivity(), new Observer<Integer>() {
             @Override
             public void onChanged(Integer onOff) {
                 settingsBluetoothReader = onOff == 0 ? false : true;
             }
         });
-        configureViewModel.getAudioJackReader().observe(getActivity(), new Observer<Integer>() {
+        settingsViewModel.getAudioJackReader().observe(getActivity(), new Observer<Integer>() {
             @Override
             public void onChanged(Integer onOff) {
                 settingsAudioJackReader = onOff == 0 ? false : true;
             }
         });
-        configureViewModel.getEnableContactless().observe(getActivity(), new Observer<Boolean>() {
+        settingsViewModel.getEnableContactless().observe(getActivity(), new Observer<Boolean>() {
             @Override
             public void onChanged(Boolean enabled) {
                 enableContactless = enabled;
             }
         });
-        configureViewModel.getEnable2In1Mode().observe(getActivity(), new Observer<Boolean>() {
+        settingsViewModel.getEnable2In1Mode().observe(getActivity(), new Observer<Boolean>() {
             @Override
             public void onChanged(Boolean enabled) {
                 enable2In1Mode = enabled;
             }
         });
-        configureViewModel.getEnableContactless().observe(this, new Observer<Boolean>() {
+        settingsViewModel.getEnableContactless().observe(this, new Observer<Boolean>() {
             @Override
             public void onChanged(Boolean enabled) {
                 enableContactless = enabled;
             }
         });
-        configureViewModel.getEnable2In1Mode().observe(this, new Observer<Boolean>() {
+        settingsViewModel.getEnable2In1Mode().observe(this, new Observer<Boolean>() {
             @Override
             public void onChanged(Boolean enabled) {
                 enable2In1Mode = enabled;
             }
         });
 
-        configureViewModel.getClearContactlessConfigurationCache().observe(this, new Observer<Boolean>() {
+        settingsViewModel.getClearContactlessConfigurationCache().observe(this, new Observer<Boolean>() {
             @Override
             public void onChanged(Boolean enabled) {
                 clearContactlessCache = enabled;
@@ -319,7 +319,7 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setMessage(message)
                 .setCancelable(false)
-                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                .setPositiveButton("\uD83D\uDCB3 OK", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         //do things
                     }
@@ -719,7 +719,7 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
                         transactionAlertDialog.setMessage(lines[0]);
                         String checkTransactionMessage = "Transaction successful. Transaction Id:";
                         String checkReceiptMessage = "Receipt sent successfully";
-                        String checkFailedTransactionFailed = "Payment failed";
+                        String checkFailedTransactionFailed = "Transaction failed";
                         if (lines[0].contains(checkFailedTransactionFailed)) {
                             if (transactionAlertDialog != null && transactionAlertDialog.isShowing()) {
                                 transactionAlertDialog.hide();

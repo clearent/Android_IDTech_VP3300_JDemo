@@ -31,14 +31,14 @@
 
                 <TextView
                     android:id="@+id/readerConnected"
-                    android:layout_width="match_parent"
+                    android:layout_width="157dp"
                     android:layout_height="wrap_content"
                     android:text="Reader Disconnected" />
             </LinearLayout>
 
             <Space
                 android:layout_width="match_parent"
-                android:layout_height="20dp" />
+                android:layout_height="5dp" />
 
             <LinearLayout
                 android:id="@+id/linearLayoutBottom3"
@@ -71,6 +71,8 @@
                     android:id="@+id/labelAmount"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-light"
+                    android:textStyle="bold"
                     android:layout_alignParentLeft="true"
                     android:layout_alignParentTop="true"
                     android:text="Amount" />
@@ -78,7 +80,7 @@
                 <EditText
                     android:id="@+id/textAmount"
                     android:layout_width="100dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="40dp"
                     android:layout_alignParentTop="true"
                     android:layout_marginLeft="10dp"
                     android:layout_toRightOf="@+id/labelAmount"
@@ -101,6 +103,8 @@
                     android:id="@+id/labelEmail"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-light"
+                    android:textStyle="bold"
                     android:layout_alignParentLeft="true"
                     android:layout_alignParentTop="true"
                     android:text="Email address" />
@@ -108,11 +112,12 @@
                 <EditText
                     android:id="@+id/customerEmailAddress"
                     android:layout_width="282dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="40dp"
                     android:layout_alignParentTop="true"
                     android:layout_marginLeft="10dp"
                     android:layout_toRightOf="@+id/labelEmail"
                     android:background="@drawable/rounded_corner"
+                    android:hint="optional"
                     android:text="" />
 
             </LinearLayout>
@@ -121,16 +126,24 @@
                 android:layout_width="match_parent"
                 android:layout_height="20dp" />
 
+
             <TextView
                 android:id="@+id/manual_entry_header_text"
                 android:layout_width="fill_parent"
                 android:layout_height="24sp"
                 android:layout_marginLeft="1dp"
-                android:gravity="bottom"
+                android:fontFamily="sans-serif-black"
+                android:gravity="center"
                 android:text="Manual Entry"
                 android:textStyle="bold">
 
             </TextView>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@android:color/darker_gray"/>
+
 
             <Space
                 android:layout_width="match_parent"
@@ -145,6 +158,8 @@
                     android:id="@+id/labelCard"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-light"
+                    android:textStyle="bold"
                     android:layout_alignParentLeft="true"
                     android:layout_alignParentTop="true"
                     android:text="Credit Card" />
@@ -152,7 +167,7 @@
                 <EditText
                     android:id="@+id/textCard"
                     android:layout_width="200dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="40dp"
                     android:layout_alignParentTop="true"
                     android:layout_marginLeft="10dp"
                     android:inputType="numberDecimal"
@@ -175,18 +190,21 @@
                     android:id="@+id/labelExp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-light"
+                    android:textStyle="bold"
                     android:layout_alignParentLeft="true"
                     android:layout_alignParentTop="true"
-                    android:text="Exp Date" />
+                    android:text="Expiration Date" />
 
                 <EditText
                     android:id="@+id/textExpirationDate"
                     android:layout_width="200dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="40dp"
                     android:layout_alignParentTop="true"
                     android:layout_marginLeft="10dp"
                     android:inputType="numberDecimal"
                     android:layout_toRightOf="@+id/labelExp"
+                    android:hint="in MMYY format"
                     android:background="@drawable/rounded_corner"
                     android:text="" />
 
@@ -206,6 +224,8 @@
                     android:id="@+id/labelCsc"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-light"
+                    android:textStyle="bold"
                     android:layout_alignParentLeft="true"
                     android:layout_alignParentTop="true"
                     android:text="CVV" />
@@ -213,12 +233,13 @@
                 <EditText
                     android:id="@+id/textCsc"
                     android:layout_width="200dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="40dp"
                     android:layout_alignParentTop="true"
                     android:layout_marginLeft="10dp"
                     android:inputType="numberDecimal"
                     android:layout_toRightOf="@+id/labelCsc"
                     android:background="@drawable/rounded_corner"
+                    android:hint="on back of card"
                     android:text="" />
 
             </LinearLayout>

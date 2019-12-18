@@ -41,9 +41,9 @@
     <string name="action_settings">Settings</string>
 
     <string name="menu_charge">Pay</string>
-    <string name="menu_configure">Configure</string>
+    <string name="menu_configure">Settings</string>
 
     <string name="title_home">Home</string>
-    <string name="title_configure">Configure</string>
+    <string name="title_configure">Settings</string>
     <string name="title_cardReader">Payment</string>
 </resources>

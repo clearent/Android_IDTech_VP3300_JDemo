@@ -53,9 +53,9 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 
-public class ConfigureFragment extends Fragment implements PublicOnReceiverListener {
+public class SettingsFragment extends Fragment implements PublicOnReceiverListener {
 
-    private ConfigureViewModel configureViewModel;
+    private SettingsViewModel settingsViewModel;
     private Button configureReaderButton;
 
     private AlertDialog configurationDialog;
@@ -91,8 +91,8 @@ public class ConfigureFragment extends Fragment implements PublicOnReceiverListe
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        configureViewModel =
-                ViewModelProviders.of(getActivity()).get(ConfigureViewModel.class);
+        settingsViewModel =
+                ViewModelProviders.of(getActivity()).get(SettingsViewModel.class);
         root = inflater.inflate(R.layout.fragment_configure, container, false);
 
         observeConfigurationValues(root);
@@ -135,57 +135,57 @@ public class ConfigureFragment extends Fragment implements PublicOnReceiverListe
     }
 
     private void observeConfigurationValues(View root) {
-        configureViewModel.getApiKey().observe(this, new Observer<String>() {
+        settingsViewModel.getApiKey().observe(this, new Observer<String>() {
             @Override
             public void onChanged(@Nullable String s) {
                 settingsApiKey = s;
             }
         });
-        configureViewModel.getPublicKey().observe(this, new Observer<String>() {
+        settingsViewModel.getPublicKey().observe(this, new Observer<String>() {
             @Override
             public void onChanged(@Nullable String s) {
                 settingsPublicKey = s;
             }
         });
 
-        configureViewModel.getProdEnvironment().observe(this, new Observer<Integer>() {
+        settingsViewModel.getProdEnvironment().observe(this, new Observer<Integer>() {
             @Override
             public void onChanged(Integer onOff) {
                 settingsProdEnvironment = onOff == 0 ? false : true;
             }
         });
 
-        configureViewModel.getBluetoothReader().observe(this, new Observer<Integer>() {
+        settingsViewModel.getBluetoothReader().observe(this, new Observer<Integer>() {
             @Override
             public void onChanged(Integer onOff) {
                 settingsBluetoothReader = onOff == 0 ? false : true;
             }
         });
-        configureViewModel.getAudioJackReader().observe(this, new Observer<Integer>() {
+        settingsViewModel.getAudioJackReader().observe(this, new Observer<Integer>() {
             @Override
             public void onChanged(Integer onOff) {
                 settingsAudioJackReader = onOff == 0 ? false : true;
             }
         });
-        configureViewModel.getEnableContactless().observe(this, new Observer<Boolean>() {
+        settingsViewModel.getEnableContactless().observe(this, new Observer<Boolean>() {
             @Override
             public void onChanged(Boolean enabled) {
                 enableContactless = enabled;
             }
         });
-        configureViewModel.getEnable2In1Mode().observe(this, new Observer<Boolean>() {
+        settingsViewModel.getEnable2In1Mode().observe(this, new Observer<Boolean>() {
             @Override
             public void onChanged(Boolean enabled) {
                 enable2In1Mode = enabled;
             }
         });
-        configureViewModel.getClearContactConfigurationCache().observe(this, new Observer<Boolean>() {
+        settingsViewModel.getClearContactConfigurationCache().observe(this, new Observer<Boolean>() {
             @Override
             public void onChanged(Boolean enabled) {
                 clearContactCache = enabled;
             }
         });
-        configureViewModel.getClearContactlessConfigurationCache().observe(this, new Observer<Boolean>() {
+        settingsViewModel.getClearContactlessConfigurationCache().observe(this, new Observer<Boolean>() {
             @Override
             public void onChanged(Boolean enabled) {
                 clearContactlessCache = enabled;
@@ -337,54 +337,54 @@ public class ConfigureFragment extends Fragment implements PublicOnReceiverListe
     private void updateViewModel() {
 
         final TextView apiKeytextView = root.findViewById(R.id.settings_apikey);
-        configureViewModel.getApiKey().setValue(apiKeytextView.getText().toString());
+        settingsViewModel.getApiKey().setValue(apiKeytextView.getText().toString());
 
         final TextView publicKeyTextView = root.findViewById(R.id.settings_publickey);
-        configureViewModel.getPublicKey().setValue(publicKeyTextView.getText().toString());
+        settingsViewModel.getPublicKey().setValue(publicKeyTextView.getText().toString());
 
         final RadioButton prodEnvRadioButton = root.findViewById(R.id.settings_prod_env);
-        configureViewModel.getProdEnvironment().setValue(prodEnvRadioButton.isChecked()?1:0);
+        settingsViewModel.getProdEnvironment().setValue(prodEnvRadioButton.isChecked()?1:0);
 
         final RadioButton sandBoxEnvRadioButton = root.findViewById(R.id.settings_sandbox_env);
-        configureViewModel.getSandboxEnvironment().setValue(sandBoxEnvRadioButton.isChecked()?1:0);
+        settingsViewModel.getSandboxEnvironment().setValue(sandBoxEnvRadioButton.isChecked()?1:0);
 
         final RadioButton audioJackRadioButton = root.findViewById(R.id.settings_audiojack_reader);
-        configureViewModel.getAudioJackReader().setValue(audioJackRadioButton.isChecked()?1:0);
+        settingsViewModel.getAudioJackReader().setValue(audioJackRadioButton.isChecked()?1:0);
 
         final RadioButton radioButton = root.findViewById(R.id.settings_bluetooth_reader);
-        configureViewModel.getBluetoothReader().setValue(radioButton.isChecked()?1:0);
+        settingsViewModel.getBluetoothReader().setValue(radioButton.isChecked()?1:0);
 
         final CheckBox enableContactlessCheckBox = root.findViewById(R.id.enableContactless);
-        configureViewModel.getEnableContactless().setValue(enableContactlessCheckBox.isChecked());
+        settingsViewModel.getEnableContactless().setValue(enableContactlessCheckBox.isChecked());
 
         final CheckBox enableContactlessConfigurationCheckBox = root.findViewById(R.id.checkboxContactlessConfigure);
-        configureViewModel.getConfigureContactless().setValue(enableContactlessConfigurationCheckBox.isChecked());
+        settingsViewModel.getConfigureContactless().setValue(enableContactlessConfigurationCheckBox.isChecked());
 
         final CheckBox enableContactConfigurationCheckBox = root.findViewById(R.id.checkboxAutoConfigure);
-        configureViewModel.getConfigureContact().setValue(enableContactConfigurationCheckBox.isChecked());
+        settingsViewModel.getConfigureContact().setValue(enableContactConfigurationCheckBox.isChecked());
 
         final CheckBox clearContactlessCacheCheckbox = root.findViewById(R.id.clearContactlessCache);
-        configureViewModel.getClearContactlessConfigurationCache().setValue(clearContactlessCacheCheckbox.isChecked());
+        settingsViewModel.getClearContactlessConfigurationCache().setValue(clearContactlessCacheCheckbox.isChecked());
 
         final CheckBox clearContactCacheCheckbox = root.findViewById(R.id.clearReaderCache);
-        configureViewModel.getClearContactConfigurationCache().setValue(clearContactCacheCheckbox.isChecked());
+        settingsViewModel.getClearContactConfigurationCache().setValue(clearContactCacheCheckbox.isChecked());
 
         final CheckBox enable2In1ModeCheckbox = root.findViewById(R.id.enable2In1Mode);
-        configureViewModel.getEnable2In1Mode().setValue(enable2In1ModeCheckbox.isChecked());
+        settingsViewModel.getEnable2In1Mode().setValue(enable2In1ModeCheckbox.isChecked());
 
     }
 
     void applyConfiguration() {
         if(configurable()) {
-            cardReaderService.setContactlessConfiguration(configureViewModel.getConfigureContactless().getValue());
-            cardReaderService.setContactless(configureViewModel.getEnableContactless().getValue());
-            cardReaderService.setAutoConfiguration(configureViewModel.getConfigureContact().getValue());
+            cardReaderService.setContactlessConfiguration(settingsViewModel.getConfigureContactless().getValue());
+            cardReaderService.setContactless(settingsViewModel.getEnableContactless().getValue());
+            cardReaderService.setAutoConfiguration(settingsViewModel.getConfigureContact().getValue());
 
-            if (configureViewModel.getClearContactConfigurationCache().getValue()) {
-                cardReaderService.setReaderConfiguredSharedPreference(configureViewModel.getClearContactConfigurationCache().getValue());
+            if (settingsViewModel.getClearContactConfigurationCache().getValue()) {
+                cardReaderService.setReaderConfiguredSharedPreference(settingsViewModel.getClearContactConfigurationCache().getValue());
             }
-            if (configureViewModel.getClearContactlessConfigurationCache().getValue()) {
-                cardReaderService.setReaderContactlessConfiguredSharedPreference(configureViewModel.getClearContactlessConfigurationCache().getValue());
+            if (settingsViewModel.getClearContactlessConfigurationCache().getValue()) {
+                cardReaderService.setReaderContactlessConfiguredSharedPreference(settingsViewModel.getClearContactlessConfigurationCache().getValue());
             }
             configuring = true;
             cardReaderService.applyClearentConfiguration();
@@ -396,7 +396,7 @@ public class ConfigureFragment extends Fragment implements PublicOnReceiverListe
     }
 
     private boolean configurable() {
-        if(configureViewModel.getConfigureContact().getValue() || configureViewModel.getConfigureContactless().getValue()) {
+        if(settingsViewModel.getConfigureContact().getValue() || settingsViewModel.getConfigureContactless().getValue()) {
             return true;
         }
         Toast.makeText(getActivity(), "Configuration not enabled", Toast.LENGTH_SHORT).show();
@@ -532,7 +532,7 @@ public class ConfigureFragment extends Fragment implements PublicOnReceiverListe
 
     void promptForReaderLast5Digits() {
 
-        Integer audioJackReader = configureViewModel.getAudioJackReader().getValue();
+        Integer audioJackReader = settingsViewModel.getAudioJackReader().getValue();
         boolean audioJackReaderEnabled = audioJackReader == 0 ? false : true;
 
         if (!audioJackReaderEnabled) {
@@ -662,7 +662,7 @@ public class ConfigureFragment extends Fragment implements PublicOnReceiverListe
     }
 
     private boolean isBluetoothReaderConfigured() {
-        Integer audioJackReader = configureViewModel.getAudioJackReader().getValue();
+        Integer audioJackReader = settingsViewModel.getAudioJackReader().getValue();
         boolean audioJackReaderEnabled = audioJackReader == 0 ? false : true;
         return !audioJackReaderEnabled;
     }
@@ -676,13 +676,13 @@ public class ConfigureFragment extends Fragment implements PublicOnReceiverListe
         }
 
         String baseUrl = Constants.BASE_URL;
-        Integer prodEnvironment = configureViewModel.getProdEnvironment().getValue();
+        Integer prodEnvironment = settingsViewModel.getProdEnvironment().getValue();
         boolean prodEnvironmentEnabled = prodEnvironment == 0 ? false : true;
         if(prodEnvironmentEnabled) {
             baseUrl = Constants.PROD_BASE_URL;
 
         }
-        String publicKey = configureViewModel.getPublicKey().getValue();
+        String publicKey = settingsViewModel.getPublicKey().getValue();
 
         cardReaderService = new CardReaderService(device_type, this, getContext(), baseUrl, publicKey, true);
 
@@ -691,7 +691,7 @@ public class ConfigureFragment extends Fragment implements PublicOnReceiverListe
             Toast.makeText(getActivity(), "Issue setting device type", Toast.LENGTH_LONG).show();
         }
         cardReaderService.setContactlessConfiguration(false);
-        cardReaderService.setContactless(configureViewModel.getEnableContactless().getValue());
+        cardReaderService.setContactless(settingsViewModel.getEnableContactless().getValue());
         cardReaderService.setAutoConfiguration(false);
 
         cardReaderService.addRemoteLogRequest("Android_IDTech_VP3300_JDemo", "Initialized the VP3300 For Configuration");

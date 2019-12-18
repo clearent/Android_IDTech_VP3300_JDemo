@@ -8,7 +8,7 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
-public class ConfigureViewModel extends AndroidViewModel {
+public class SettingsViewModel extends AndroidViewModel {
 
     private MutableLiveData<Boolean> enableContactless;
     private MutableLiveData<String> readerConnected;
@@ -32,7 +32,7 @@ public class ConfigureViewModel extends AndroidViewModel {
     private MutableLiveData<String> apiKey;
     private MutableLiveData<String> publicKey;
 
-    public ConfigureViewModel(Application app) {
+    public SettingsViewModel(Application app) {
         super(app);
         prodEnvironment = new MutableLiveData<>();
         prodEnvironment.setValue(0);
@@ -137,7 +137,7 @@ public class ConfigureViewModel extends AndroidViewModel {
 
     @Override
     public String toString() {
-        return "ConfigureViewModel{" +
+        return "SettingsViewModel{" +
                 "enableContactless=" + enableContactless.getValue() +
                 ", clearContactConfigurationCache=" + clearContactConfigurationCache.getValue() +
                 ", clearContactlessConfigurationCache=" + clearContactlessConfigurationCache.getValue() +

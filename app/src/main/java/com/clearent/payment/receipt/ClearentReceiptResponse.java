@@ -1,4 +1,4 @@
-package com.clearent.payment;
+package com.clearent.payment.receipt;
 
 public class ClearentReceiptResponse {
 

@@ -1,10 +1,11 @@
-package com.clearent.payment;
+package com.clearent.payment.manual;
 
 import com.clearent.Constants;
 import com.clearent.idtech.android.family.HasManualTokenizingSupport;
 import com.clearent.idtech.android.token.manual.ManualCardTokenizer;
 import com.clearent.idtech.android.token.manual.ManualCardTokenizerImpl;
 import com.clearent.idtech.android.token.manual.ManualEntry;
+import com.clearent.payment.CreditCard;
 
 public class ManualEntryService {
 

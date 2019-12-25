@@ -1,4 +1,4 @@
-package com.clearent.payment;
+package com.clearent.payment.receipt;
 
 
 import android.util.Log;
@@ -15,7 +15,7 @@ public class PostReceiptTaskResponseHandler {
 
     public void handleResponse(ClearentReceiptResponse clearentReceiptResponse) {
         if(clearentReceiptResponse == null) {
-            publicOnReceiverListener.lcdDisplay(0, new String[]{"Receipt failed"}, 0);
+            publicOnReceiverListener.lcdDisplay(0, new String[]{"PostReceipt failed"}, 0);
         } else {
             publicOnReceiverListener.lcdDisplay(0, new String[]{clearentReceiptResponse.getMessage()}, 0);
             Log.i("CLEARENT", clearentReceiptResponse.getMessage());

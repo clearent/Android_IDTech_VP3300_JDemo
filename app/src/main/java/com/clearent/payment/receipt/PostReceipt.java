@@ -1,7 +1,7 @@
-package com.clearent.payment;
+package com.clearent.payment.receipt;
 
 import com.clearent.idtech.android.PublicOnReceiverListener;
 
-public interface SampleReceipt {
+public interface PostReceipt {
     void doReceipt(ReceiptRequest receiptRequest, PublicOnReceiverListener publicOnReceiverListener);
 }

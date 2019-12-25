@@ -1,18 +1,9 @@
 package com.clearent.ui.payment;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothManager;
-import android.bluetooth.le.ScanCallback;
-import android.bluetooth.le.ScanFilter;
-import android.bluetooth.le.ScanResult;
-import android.bluetooth.le.ScanSettings;
-import android.content.Context;
+import android.bluetooth.BluetoothDevice;
 import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -20,7 +11,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -31,17 +21,20 @@ import com.clearent.idtech.android.domain.CardProcessingResponse;
 import com.clearent.idtech.android.domain.ClearentPaymentRequest;
 import com.clearent.idtech.android.family.HasManualTokenizingSupport;
 import com.clearent.idtech.android.token.domain.TransactionToken;
-import com.clearent.payment.CardReaderService;
+import com.clearent.reader.CardReaderService;
 import com.clearent.payment.CreditCard;
-import com.clearent.payment.ManualEntryService;
+import com.clearent.payment.manual.ManualEntryService;
 import com.clearent.payment.PostTransactionRequest;
-import com.clearent.payment.ReceiptDetail;
-import com.clearent.payment.ReceiptRequest;
-import com.clearent.payment.SampleReceipt;
-import com.clearent.payment.SampleReceiptImpl;
-import com.clearent.payment.SampleTransaction;
-import com.clearent.payment.SampleTransactionImpl;
-import com.clearent.ui.tools.SettingsViewModel;
+import com.clearent.payment.receipt.ReceiptDetail;
+import com.clearent.payment.receipt.ReceiptRequest;
+import com.clearent.payment.receipt.PostReceipt;
+import com.clearent.payment.receipt.PostReceiptImpl;
+import com.clearent.payment.PostPayment;
+import com.clearent.payment.PostPaymentImpl;
+import com.clearent.reader.bluetooth.BluetoothScanListener;
+import com.clearent.reader.bluetooth.BluetoothLeService;
+import com.clearent.reader.bluetooth.BluetoothScanMessage;
+import com.clearent.ui.settings.SettingsViewModel;
 import com.idtechproducts.device.Common;
 import com.idtechproducts.device.ErrorCode;
 import com.idtechproducts.device.ErrorCodeInfo;
@@ -51,40 +44,22 @@ import com.idtechproducts.device.ResDataStruct;
 import com.idtechproducts.device.StructConfigParameters;
 import com.idtechproducts.device.bluetooth.BluetoothLEController;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 
-public class PaymentFragment extends Fragment implements PublicOnReceiverListener, HasManualTokenizingSupport {
+public class PaymentFragment extends Fragment implements PublicOnReceiverListener, HasManualTokenizingSupport, BluetoothScanListener {
 
     private PaymentViewModel paymentViewModel;
     private SettingsViewModel settingsViewModel;
-    private boolean isBluetoothScanning = false;
-    private static final int REQUEST_ENABLE_BT = 1;
-    private BluetoothAdapter mBtAdapter = null;
     private AlertDialog transactionAlertDialog;
-    private AlertDialog connectionDialog;
     private String info = "";
     private Handler handler = new Handler();
     private Button swipeButton;
-    private Button connectButton;
 
-    private int bleRetryCount = 0;
     private boolean isReady = false;
-    private boolean btleDeviceRegistered = false;
-    private String btleDeviceAddress = null;
 
     private String settingsApiKey = Constants.API_KEY_FOR_DEMO_ONLY;
     private String settingsPublicKey = Constants.PUBLIC_KEY;
@@ -95,13 +70,15 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
     private Boolean enable2In1Mode = false;
     private Boolean clearContactCache = false;
     private Boolean clearContactlessCache = false;
+    private String last5OfBluetoothReader = null;
 
     private CardReaderService cardReaderService;
     private ManualEntryService manualEntryService;
 
     private Boolean runningTransaction = false;
-    private Boolean connectingToBluetooth = false;
     private Boolean runningManualEntry = false;
+
+    private BluetoothLeService bluetoothLeService;
 
     View root = null;
     ViewGroup viewGroup;
@@ -124,13 +101,15 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
 
         bindButtons(root);
 
+        bluetoothLeService = new BluetoothLeService(this, Constants.BLUETOOTH_SCAN_PERIOD);
+
         updateReaderConnected("Reader Disconnected ❌");
 
         return root;
     }
 
     @Override
-    public void onPause(){
+    public void onPause() {
         super.onPause();
         releaseSDK();
         updateViewModel();
@@ -201,6 +180,14 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
             }
         });
 
+        settingsViewModel.getLast5OfBluetoothReader().observe(this, new Observer<String>() {
+            @Override
+            public void onChanged(String s) {
+                last5OfBluetoothReader = s;
+                Common.setBLEDeviceName(s);
+            }
+        });
+
     }
 
     private void updateReaderConnected(final String message) {
@@ -215,24 +202,11 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
         });
     }
 
-    private void hideConnectionDialog() {
-        getActivity().runOnUiThread(new Runnable() {
-            public void run() {
-                connectionDialog.hide();
-            }
-        });
-    }
-
     private void bindButtons(View root) {
         swipeButton = (Button) root.findViewById(R.id.btn_swipeCard);
         swipeButton.setOnClickListener(new SwipeButtonListener());
 
         swipeButton.setEnabled(true);
-
-        connectButton = (Button) root.findViewById(R.id.btn_connect);
-        connectButton.setOnClickListener(new ConnectButtonListener());
-
-        connectButton.setEnabled(true);
 
     }
 
@@ -279,20 +253,22 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
 
     @Override
     public void isReady() {
-        if(connectingToBluetooth && connectionDialog != null && connectionDialog.isShowing()) {
-            updateReaderConnected("Reader Connected \uD83D\uDC9A️");
-            hideConnectionDialog();
-            connectingToBluetooth = false;
+//        if (cardReaderService.device_isConnected()) {
+//            updateReaderConnected("Reader Connected \uD83D\uDC9A️");
+//            if(reconnectingReader) {
+//                handler.post(doStartTransaction);
+//            }
+//            return;
+//        }
+
+        if (runningTransaction) {
             return;
         }
 
-        if(runningTransaction) {
-            return;
-        }
         updateReaderConnected("Reader Ready ❤️");
         if (!isReady && transactionAlertDialog != null && transactionAlertDialog.isShowing()) {
             String amount = paymentViewModel.getPaymentAmount().getValue();
-            if(amount == null || "".equals(amount)) {
+            if (amount == null || "".equals(amount)) {
                 closePopup();
                 Toast.makeText(getActivity(), "Amount Required", Toast.LENGTH_LONG).show();
                 return;
@@ -301,7 +277,7 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
             }
         } else if (!isReady && transactionAlertDialog != null && !transactionAlertDialog.isShowing()) {
             String amount = paymentViewModel.getPaymentAmount().getValue();
-            if(amount == null || "".equals(amount)) {
+            if (amount == null || "".equals(amount)) {
                 Toast.makeText(getActivity(), "Amount Required", Toast.LENGTH_LONG).show();
             } else {
                 transactionAlertDialog.show();
@@ -316,9 +292,9 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
     @Override
     public void successfulTransactionToken(final TransactionToken transactionToken) {
         handler.post(doSuccessUpdates);
-        SampleTransaction sampleTransaction = new SampleTransactionImpl();
-        PostTransactionRequest postTransactionRequest = sampleTransaction.createPostTransactionRequest(transactionToken, paymentViewModel.getPaymentAmount().getValue(), settingsApiKey);
-        sampleTransaction.doSale(postTransactionRequest, this);
+        PostPayment postPayment = new PostPaymentImpl();
+        PostTransactionRequest postTransactionRequest = postPayment.createPostTransactionRequest(transactionToken, paymentViewModel.getPaymentAmount().getValue(), settingsApiKey);
+        postPayment.doSale(postTransactionRequest, this);
     }
 
     private void showPaymentSuccess(String message) {
@@ -351,8 +327,8 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
 
     private Runnable doSuccessUpdates = new Runnable() {
         public void run() {
-            if(transactionAlertDialog != null && transactionAlertDialog.isShowing()) {
-                if(runningManualEntry) {
+            if (transactionAlertDialog != null && transactionAlertDialog.isShowing()) {
+                if (runningManualEntry) {
                     addPopupMessage(transactionAlertDialog, "Card tokenized");
                 } else {
                     addPopupMessage(transactionAlertDialog, "Please remove card");
@@ -417,100 +393,13 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
             releaseSDK();
         }
         isReady = false;
-        btleDeviceRegistered = false;
-        isBluetoothScanning = false;
     }
-
-    private EditText edtBTLE_Name;
-    private Dialog dlgBTLE_Name;
-
-    void promptForReaderLast5Digits() {
-
-        if (settingsBluetoothReader) {
-            Toast.makeText(getActivity(), "VP3300 Bluetooth (Bluetooth) is selected", Toast.LENGTH_SHORT).show();
-            dlgBTLE_Name = new Dialog(getActivity());
-            dlgBTLE_Name.setTitle("Enter Name or Address");
-            dlgBTLE_Name.setCancelable(false);
-            dlgBTLE_Name.setContentView(R.layout.bluetooth_device_dialog);
-            Button btnBTLE_Ok = (Button) dlgBTLE_Name.findViewById(R.id.btnSetBTLE_Name_Ok);
-            edtBTLE_Name = (EditText) dlgBTLE_Name.findViewById(R.id.edtBTLE_Name);
-            String bleId = Constants.DEFAULT_DEVICE_SERIAL_NUMBER_SUFFIX;
-            try {
-                InputStream inputStream = getActivity().openFileInput("bleId.txt");
-
-                if (inputStream != null) {
-                    InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
-                    BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-                    String receiveString = "";
-                    StringBuilder stringBuilder = new StringBuilder();
-
-                    while ((receiveString = bufferedReader.readLine()) != null) {
-                        stringBuilder.append(receiveString);
-                    }
-
-                    inputStream.close();
-                    bleId = stringBuilder.toString();
-                }
-            } catch (FileNotFoundException e) {
-
-            } catch (IOException e) {
-
-            }
-            edtBTLE_Name.setText(bleId);
-            connectingToBluetooth = true;
-            btnBTLE_Ok.setOnClickListener(setBTLE_NameOnClick);
-            dlgBTLE_Name.show();
-            btleDeviceRegistered = false;
-            isBluetoothScanning = false;
-        }
-    }
-
-    private View.OnClickListener setBTLE_NameOnClick = new View.OnClickListener() {
-        public void onClick(View v) {
-            dlgBTLE_Name.dismiss();
-            Common.setBLEDeviceName(edtBTLE_Name.getText().toString());
-
-            try {
-                OutputStreamWriter outputStreamWriter = new OutputStreamWriter(getActivity().openFileOutput("bleId.txt", Context.MODE_PRIVATE));
-                outputStreamWriter.write(edtBTLE_Name.getText().toString());
-                outputStreamWriter.close();
-            } catch (IOException e) {
-
-            }
-
-            if (!isBleSupported(getActivity())) {
-                Toast.makeText(getActivity(), "Bluetooth LE is not supported\r\n", Toast.LENGTH_LONG).show();
-                return;
-            }
-
-            final BluetoothManager bluetoothManager = (BluetoothManager) getActivity().getSystemService(Context.BLUETOOTH_SERVICE);
-            mBtAdapter = bluetoothManager.getAdapter();
-
-            if (mBtAdapter == null) {
-                Toast.makeText(getActivity(), "Bluetooth LE is not available\r\n", Toast.LENGTH_LONG).show();
-                return;
-            }
-
-            btleDeviceRegistered = false;
-            isBluetoothScanning = false;
-            isReady = false;
-
-            displayConnectionPopup();
-            if (!mBtAdapter.isEnabled()) {
-                Log.i("CLEARENT", "Adapter");
-                Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-            } else {
-                scanforDevice(true, Constants.BLE_SCAN_TIMEOUT);
-            }
-        }
-    };
 
     private void displayTransactionPopup() {
         getActivity().runOnUiThread(new Runnable() {
             public void run() {
                 if (transactionAlertDialog != null) {
-                    if(runningManualEntry) {
+                    if (runningManualEntry) {
                         transactionAlertDialog.setTitle("Processing card");
                         addPopupMessage(transactionAlertDialog, "");
                     } else {
@@ -521,7 +410,7 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
                 } else {
                     AlertDialog.Builder transactionViewBuilder = new AlertDialog.Builder(getActivity());
 
-                    if(runningManualEntry) {
+                    if (runningManualEntry) {
                         transactionViewBuilder.setTitle("Processing card");
                         addPopupMessage(transactionAlertDialog, "");
                     } else {
@@ -547,12 +436,15 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
                     transactionAlertDialog = transactionViewBuilder.create();
                     transactionAlertDialog.show();
                 }
+                if(!cardReaderService.device_isConnected()) {
+                    addPopupMessage(transactionAlertDialog,"Press button on reader");
+                }
             }
         });
     }
 
     private void closePopup() {
-        if(transactionAlertDialog != null) {
+        if (transactionAlertDialog != null) {
             transactionAlertDialog.hide();
             TextView textView = (TextView) transactionAlertDialog.findViewById(R.id.popupMessages);
             if (textView != null) {
@@ -571,168 +463,6 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
         }
     }
 
-    private void displayConnectionPopup() {
-        getActivity().runOnUiThread(new Runnable() {
-            public void run() {
-                if (connectionDialog != null) {
-                    connectionDialog.setTitle("Connecting to Bluetooth Reader");
-                    connectionDialog.setMessage("Press button on reader.");
-                    connectionDialog.show();
-                } else {
-                    AlertDialog.Builder connectionViewBuilder = new AlertDialog.Builder(getActivity());
-
-                    connectionViewBuilder.setTitle("Connecting to Bluetooth Reader");
-                    connectionViewBuilder.setMessage("Press button on reader.");
-                    connectionViewBuilder.setCancelable(false);
-                    connectionViewBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-
-                        public void onClick(DialogInterface dialog, int which) {
-                           //TODO
-                        }
-                    });
-                    connectionDialog = connectionViewBuilder.create();
-                    connectionDialog.show();
-                }
-            }
-        });
-    }
-
-    boolean isBleSupported(Context context) {
-        return BluetoothAdapter.getDefaultAdapter() != null && context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE);
-    }
-
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (cardReaderService.device_getDeviceType() == DEVICE_TYPE.DEVICE_VP3300_BT) {
-            if (requestCode == REQUEST_ENABLE_BT) {
-                if (resultCode == Activity.RESULT_OK) {
-                    Toast.makeText(getActivity(), "Bluetooth has turned on, now searching for device", Toast.LENGTH_SHORT).show();
-                    scanforDevice(true, Constants.BLE_SCAN_TIMEOUT);
-                } else {
-                    Toast.makeText(getActivity(), "Problem in Bluetooth Turning ON", Toast.LENGTH_SHORT).show();
-                    handler.post(doEnableButtons);
-                }
-            }
-        }
-    }
-
-    private void scanforDevice(final boolean enable, final long timeout) {
-        if (cardReaderService.device_getDeviceType() != DEVICE_TYPE.DEVICE_VP3300_BT) {
-            return;
-        }
-
-        isReady = false;
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        btleDeviceRegistered = false;
-        bleRetryCount = 0;
-        scanLeDevice(true, timeout);
-    }
-
-    private void scanLeDevice(final boolean enable, final long timeout) {
-        if (enable) {
-            handler.postDelayed(new Runnable() {
-                public void run() {
-                    info += "\nStopping Scan Time " + new Date().toString() + "\n";
-                    mBtAdapter.getBluetoothLeScanner().stopScan(scanCallback);
-                    isBluetoothScanning = false;
-                    if (!cardReaderService.device_isConnected()) {
-                        info += "\nTimed out trying to find bluetooth device";
-                        handler.post(doUpdateStatus);
-                        btleDeviceRegistered = false;
-                        bleRetryCount++;
-                        if (bleRetryCount <= Constants.BLE_MAX_SCAN_TRIES) {
-                            if (transactionAlertDialog != null && transactionAlertDialog.isShowing()) {
-                                addPopupMessage(transactionAlertDialog, "Connecting to bluetooth... " + bleRetryCount);
-                            }
-                            info += "\nTrying again ";
-                            handler.post(doUpdateStatus);
-                            scanLeDevice(true, timeout);
-                        } else {
-                            info += "\nFailed to connect to bluetooth device.";
-                            handler.post(doUpdateStatus);
-                            if (transactionAlertDialog != null && transactionAlertDialog.isShowing()) {
-                                addPopupMessage(transactionAlertDialog, "Failed to connect to bluetooth. Cancel and Try again");
-                            }
-                        }
-                    }
-                }
-            }, timeout);
-
-            List<ScanFilter> scanFilters = createScanFilter();
-            ScanSettings settings = new ScanSettings.Builder()
-                    .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
-                    .setReportDelay(0)
-                    .build();
-            mBtAdapter.getBluetoothLeScanner().startScan(scanFilters, settings, scanCallback);
-        } else {
-            mBtAdapter.getBluetoothLeScanner().stopScan(scanCallback);
-        }
-    }
-
-    private List<ScanFilter> createScanFilter() {
-        List<ScanFilter> scanFilters = new ArrayList<>();
-        ScanFilter scanFilter = null;
-        String last5 = Common.getBLEDeviceName();
-        if (btleDeviceAddress != null) {
-            scanFilter = new ScanFilter.Builder().setDeviceAddress(btleDeviceAddress).build();
-        } else if (last5 != null && !"".equals(last5)) {
-            scanFilter = new ScanFilter.Builder().setDeviceName("IDTECH-VP3300-" + last5).build();
-        } else {
-            scanFilter = new ScanFilter.Builder().build();
-        }
-        scanFilters.add(scanFilter);
-        return scanFilters;
-    }
-
-    private ScanCallback scanCallback = new ScanCallback() {
-        @Override
-        public void onScanResult(int callbackType, ScanResult result) {
-            super.onScanResult(callbackType, result);
-            String last5 = Common.getBLEDeviceName();
-            String searchString = last5 != null && !"".equals(last5) ? "IDTECH-VP3300-" + last5 : "IDTECH";
-            if (result == null || result.getDevice() == null || result.getDevice().getName() == null) {
-                Log.i("SCAN", "Skipping weirdness ");
-            } else if (!btleDeviceRegistered && result.getDevice().getName().contains(searchString)) {
-                info += "\nDevice found during scan at Time " + new Date().toString() + ". Pass device to idtech framework to register a listener.\n";
-                Log.i("SCAN", "Scan success " + result.getDevice().getName());
-                BluetoothLEController.setBluetoothDevice(result.getDevice());
-                btleDeviceAddress = result.getDevice().getAddress();
-                String storedDeviceSerialNumberOfConfiguredReader = cardReaderService.getStoredDeviceSerialNumberOfConfiguredReader();
-                if (storedDeviceSerialNumberOfConfiguredReader.contains(last5)) {
-                    Log.i("WATCH", "The device we found during scanning has been configured from this device");
-                }
-                btleDeviceRegistered = true;
-                handler.post(doRegisterListen);
-            } else {
-                Log.i("SCAN", "Skip " + result.getDevice().getName());
-            }
-        }
-
-        @Override
-        public void onBatchScanResults(List<ScanResult> results) {
-            super.onBatchScanResults(results);
-            System.out.println("BLE// onBatchScanResults");
-            for (ScanResult sr : results) {
-                Log.i("ScanResult - Results", sr.toString());
-                info += "\nScanResult - Results" + sr.toString() + "\n";
-                handler.post(doUpdateStatus);
-            }
-        }
-
-        @Override
-        public void onScanFailed(int errorCode) {
-            super.onScanFailed(errorCode);
-            System.out.println("BLE// onScanFailed");
-            Log.e("Scan Failed", "Error Code: " + errorCode);
-            info += "\nScan Failed. Error Code: " + errorCode + "\n";
-            handler.post(doUpdateStatus);
-        }
-    };
-
     public void lcdDisplay(int mode, final String[] lines, int timeout) {
         if (lines != null && lines.length > 0) {
             getActivity().runOnUiThread(new Runnable() {
@@ -747,7 +477,7 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
                     if (transactionAlertDialog != null && transactionAlertDialog.isShowing()) {
                         addPopupMessage(transactionAlertDialog, lines[0]);
                         String checkTransactionMessage = "Transaction successful. Transaction Id:";
-                        String checkReceiptMessage = "Receipt sent successfully";
+                        String checkReceiptMessage = "PostReceipt sent successfully";
                         String checkFailedTransactionFailed = "Transaction failed";
                         if (lines[0].contains(checkFailedTransactionFailed)) {
                             if (transactionAlertDialog != null && transactionAlertDialog.isShowing()) {
@@ -763,7 +493,7 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
                             showPaymentSuccess(lines[0]);
                             runSampleReceipt(lines[0]);
                         } else if (lines[0].contains(checkReceiptMessage)) {
-                            Toast.makeText(getActivity(), "Sent Receipt", Toast.LENGTH_LONG).show();
+                            Toast.makeText(getActivity(), "Sent PostReceipt", Toast.LENGTH_LONG).show();
                             if (transactionAlertDialog != null && transactionAlertDialog.isShowing()) {
                                 closePopup();
                             }
@@ -789,8 +519,8 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
         receiptDetail.setTransactionId(parts[1]);
         receiptRequest.setReceiptDetail(receiptDetail);
 
-        SampleReceipt sampleReceipt = new SampleReceiptImpl();
-        sampleReceipt.doReceipt(receiptRequest, this);
+        PostReceipt postReceipt = new PostReceiptImpl();
+        postReceipt.doReceipt(receiptRequest, this);
     }
 
     public void lcdDisplay(int mode, String[] lines, int timeout, byte[] languageCode, byte messageId) {
@@ -840,7 +570,6 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
         }
     }
 
-
     private Runnable doUpdateStatus = new Runnable() {
         public void run() {
             //   infoText.setText(info);
@@ -864,15 +593,7 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
                 }
                 handler.post(doStartTransaction);
             } else {
-                isReady = false;
-                if (transactionAlertDialog != null) {
-                    transactionAlertDialog.show();
-                } else {
-                    displayTransactionPopup();
-                }
-                if (cardReaderService.device_getDeviceType() == DEVICE_TYPE.DEVICE_VP3300_BT) {
-                    scanforDevice(true, Constants.BLE_SCAN_TIMEOUT);
-                }
+                Toast.makeText(getActivity(), "Connect Reader First", Toast.LENGTH_LONG).show();
             }
         }
     };
@@ -883,17 +604,11 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
         }
     };
 
-
     private Runnable doStartTransaction = new Runnable() {
         @Override
         public void run() {
-            byte tags[] = {(byte) 0xDF, (byte) 0xEF, 0x1F, 0x02, 0x01, 0x00};
-
             String amount = paymentViewModel.getPaymentAmount().getValue();
             ClearentPaymentRequest clearentPaymentRequest = new ClearentPaymentRequest(Double.valueOf(amount), 0.00, 0, 60, null);
-
-            System.out.println(paymentViewModel.getCustomerEmailAddress().getValue());
-
             clearentPaymentRequest.setEmailAddress(paymentViewModel.getCustomerEmailAddress().getValue());
 
             int ret = 0;
@@ -914,11 +629,8 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
                 handler.post(doEnableButtons);
                 handler.post(doUpdateStatus);
             } else if (!cardReaderService.device_isConnected() && cardReaderService.device_setDeviceType(DEVICE_TYPE.DEVICE_VP3300_BT)) {
-                addPopupMessage(transactionAlertDialog, "Card reader is not connecting. Check for low battery amber light or press button to try again");
+                addPopupMessage(transactionAlertDialog, "Card reader not connected. Press button on reader and try again");
                 handler.post(doEnableButtons);
-                handler.post(doUpdateStatus);
-                btleDeviceRegistered = false;
-                scanforDevice(true, Constants.BLE_SCAN_TIMEOUT);
             } else {
                 addPopupMessage(transactionAlertDialog, "Failed to start transaction. Cancel and try again");
                 info = "cannot swipe/tap card\n";
@@ -940,13 +652,23 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
         return Constants.PUBLIC_KEY;
     }
 
+    @Override
+    public void handle(BluetoothDevice bluetoothDevice) {
+        BluetoothLEController.setBluetoothDevice(bluetoothDevice);
+        handler.post(doRegisterListen);
+    }
+
+    @Override
+    public void handle(BluetoothScanMessage bluetoothScanMessage) {
+        if(!BluetoothScanMessage.SCAN_STOPPED.equals(bluetoothScanMessage)) {
+            addPopupMessage(transactionAlertDialog, bluetoothScanMessage.getDisplayMessage());
+        }
+    }
+
     public class SwipeButtonListener implements View.OnClickListener {
         public void onClick(View arg0) {
 
             updateViewModel();
-
-            btleDeviceRegistered = false;
-            isBluetoothScanning = false;
             runningManualEntry = false;
 
             if (cardReaderService == null) {
@@ -962,10 +684,20 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
                 manualEntryService.createTransactionToken(creditCard);
             } else if (cardReaderService.device_isConnected()) {
                 String amount = paymentViewModel.getPaymentAmount().getValue();
-                if(amount == null || "".equals(amount)) {
+                if (amount == null || "".equals(amount)) {
                     Toast.makeText(getActivity(), "Amount Required", Toast.LENGTH_LONG).show();
                 } else {
                     handler.post(doSwipeProgressBar);
+                }
+            } else if (!cardReaderService.device_isConnected()) {
+                displayTransactionPopup();
+                if (settingsBluetoothReader) {
+                    bluetoothLeService.scan(Constants.BLUETOOTH_READER_PREFIX + "-" + last5OfBluetoothReader);
+                    Toast.makeText(getActivity(), "Connecting Bluetooth Reader Ending In " + last5OfBluetoothReader, Toast.LENGTH_LONG).show();
+                } else if (settingsAudioJackReader) {
+                    handler.post(doRegisterListen);
+                    cardReaderService.device_configurePeripheralAndConnect();
+                    Toast.makeText(getActivity(), "Connecting Audio Jack Reader", Toast.LENGTH_LONG).show();
                 }
             } else {
                 Toast.makeText(getActivity(), "Connect Reader First", Toast.LENGTH_LONG).show();
@@ -980,31 +712,6 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
         return false;
     }
 
-    public class ConnectButtonListener implements View.OnClickListener {
-        public void onClick(View arg0) {
-
-            btleDeviceRegistered = false;
-            isBluetoothScanning = false;
-            connectingToBluetooth = false;
-
-            if (cardReaderService == null) {
-                initCardReaderService();
-            }
-
-            if (!cardReaderService.device_isConnected()) {
-                if (settingsBluetoothReader) {
-                    promptForReaderLast5Digits();
-                } else if (settingsAudioJackReader) {
-                    handler.post(doRegisterListen);
-                    cardReaderService.device_configurePeripheralAndConnect();
-                }
-            } else {
-                Toast.makeText(getActivity(), "Reader is connected", Toast.LENGTH_LONG).show();
-            }
-        }
-    }
-
-
     private void initCardReaderService() {
         ReaderInfo.DEVICE_TYPE device_type = ReaderInfo.DEVICE_TYPE.DEVICE_VP3300_BT;
         if (settingsAudioJackReader) {
@@ -1018,7 +725,7 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
         cardReaderService = new CardReaderService(device_type, this, getContext(), baseUrl, settingsPublicKey, true);
 
         boolean device_setDeviceTypeResponse = cardReaderService.device_setDeviceType(device_type);
-        if(!device_setDeviceTypeResponse) {
+        if (!device_setDeviceTypeResponse) {
             Toast.makeText(getActivity(), "Issue setting device type", Toast.LENGTH_LONG).show();
         }
         cardReaderService.setContactlessConfiguration(false);

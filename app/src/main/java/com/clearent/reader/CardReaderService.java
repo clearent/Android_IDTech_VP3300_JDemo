@@ -1,8 +1,7 @@
-package com.clearent.payment;
+package com.clearent.reader;
 
 import android.content.Context;
 
-import com.clearent.ApplicationContext3In1;
 import com.clearent.Constants;
 import com.clearent.idtech.android.PublicOnReceiverListener;
 import com.clearent.idtech.android.domain.ClearentPaymentRequest;

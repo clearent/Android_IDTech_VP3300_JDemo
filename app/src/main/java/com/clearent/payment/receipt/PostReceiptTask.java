@@ -1,4 +1,4 @@
-package com.clearent.payment;
+package com.clearent.payment.receipt;
 
 import android.os.AsyncTask;
 import android.util.Log;
@@ -48,7 +48,7 @@ public class PostReceiptTask extends AsyncTask<Void, Void, ClearentReceiptRespon
 
                 int httpResult = httpsURLConnection.getResponseCode();
                 if (httpResult == 200) {
-                    clearentReceiptResponse = new ClearentReceiptResponse("Receipt sent successfully");
+                    clearentReceiptResponse = new ClearentReceiptResponse("PostReceipt sent successfully");
                 } else  {
                     clearentReceiptResponse = createGenericErrorResponse();
                 }

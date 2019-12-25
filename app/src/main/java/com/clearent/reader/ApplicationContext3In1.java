@@ -1,12 +1,12 @@
-package com.clearent;
+package com.clearent.reader;
 
 import android.content.Context;
 
 import com.clearent.idtech.android.PublicOnReceiverListener;
-import com.clearent.idtech.android.family.ApplicationContext;
+import com.clearent.idtech.android.family.ApplicationContextFor3In1Reader;
 import com.idtechproducts.device.ReaderInfo;
 
-public class ApplicationContextContact implements ApplicationContext {
+public class ApplicationContext3In1 implements ApplicationContextFor3In1Reader {
 
     private ReaderInfo.DEVICE_TYPE deviceType;
     private PublicOnReceiverListener publicOnReceiverListener;
@@ -15,8 +15,10 @@ public class ApplicationContextContact implements ApplicationContext {
     private String paymentsPublicKey;
     private String idTechXmlConfigurationFileLocation;
     private Boolean autoConfiguration = false;
+    private Boolean enableContactlessConfiguration = false;
+    private Boolean enableContactless = true;
 
-    public ApplicationContextContact(ReaderInfo.DEVICE_TYPE deviceType, PublicOnReceiverListener publicOnReceiverListener, Context context, String paymentsBaseUrl, String paymentsPublicKey, String idTechXmlConfigurationFileLocation) {
+    public ApplicationContext3In1(ReaderInfo.DEVICE_TYPE deviceType, PublicOnReceiverListener publicOnReceiverListener, Context context, String paymentsBaseUrl, String paymentsPublicKey, String idTechXmlConfigurationFileLocation) {
         this.deviceType = deviceType;
         this.publicOnReceiverListener = publicOnReceiverListener;
         this.context = context;
@@ -64,4 +66,13 @@ public class ApplicationContextContact implements ApplicationContext {
         this.autoConfiguration = autoConfiguration;
     }
 
+    @Override
+    public boolean enableContactlessConfiguration() {
+        return enableContactlessConfiguration;
+    }
+
+    @Override
+    public boolean enableContactless() {
+        return enableContactless;
+    }
 }

@@ -4,9 +4,9 @@ import com.clearent.Constants;
 import com.clearent.idtech.android.PublicOnReceiverListener;
 import com.clearent.idtech.android.token.domain.TransactionToken;
 
-public class SampleTransactionImpl implements SampleTransaction {
+public class PostPaymentImpl implements PostPayment {
 
-    public SampleTransactionImpl() {
+    public PostPaymentImpl() {
     }
 
     public PostTransactionRequest createPostTransactionRequest(TransactionToken transactionToken, String amount, String apiKey) {

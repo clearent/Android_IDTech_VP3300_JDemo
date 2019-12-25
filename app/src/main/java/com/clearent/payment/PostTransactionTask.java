@@ -15,7 +15,7 @@ import javax.net.ssl.HttpsURLConnection;
 
 /**
  * This is only a sample transaction request. Do not add this code to a mobile app. It uses a secret key in a request header that only you and Clearent should know about.
- * secret keys usage is meant for server side calls.
+ * Secret keys usage like 'api keys' are meant for server side calls.
  */
 public class PostTransactionTask extends AsyncTask<Void, Void, ClearentTransactionResponse> {
 
@@ -24,7 +24,6 @@ public class PostTransactionTask extends AsyncTask<Void, Void, ClearentTransacti
     }
 
     private static final String RELATIVE_PATH = "/rest/v2/mobile/transactions/sale";
-    //private static final String RELATIVE_PATH = "/rest/v2/mobile/transactions";
 
     private HttpsURLConnection httpsURLConnection;
 

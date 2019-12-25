@@ -1,11 +1,10 @@
-package com.clearent.ui.tools;
+package com.clearent.ui.settings;
 
 import android.app.Application;
 
-import com.clearent.Constants;
+import com.clearent.util.LocalCache;
 
 import androidx.lifecycle.AndroidViewModel;
-import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 public class SettingsViewModel extends AndroidViewModel {
@@ -32,6 +31,8 @@ public class SettingsViewModel extends AndroidViewModel {
     private MutableLiveData<String> apiKey;
     private MutableLiveData<String> publicKey;
 
+    private MutableLiveData<String> last5OfBluetoothReader;
+
     public SettingsViewModel(Application app) {
         super(app);
         prodEnvironment = new MutableLiveData<>();
@@ -45,6 +46,9 @@ public class SettingsViewModel extends AndroidViewModel {
         audioJackReader.setValue(0);
         bluetoothReader = new MutableLiveData<>();
         bluetoothReader.setValue(1);
+
+        last5OfBluetoothReader = new MutableLiveData<>();
+        last5OfBluetoothReader.setValue(LocalCache.getSelectedBluetoothDeviceLast5(getApplication()));
 
         apiKey = new MutableLiveData<>();
         publicKey = new MutableLiveData<>();
@@ -69,6 +73,14 @@ public class SettingsViewModel extends AndroidViewModel {
         configureContactless = new MutableLiveData<>();
         configureContactless.setValue(false);
 
+    }
+
+    public MutableLiveData<String> getLast5OfBluetoothReader() {
+        return last5OfBluetoothReader;
+    }
+
+    public void setLast5OfBluetoothReader(String last5OfBluetoothReader) {
+        this.last5OfBluetoothReader.postValue(last5OfBluetoothReader );
     }
 
     public MutableLiveData<String> getReaderConnected() {
@@ -148,8 +160,6 @@ public class SettingsViewModel extends AndroidViewModel {
                 ", environment=" + environment.getValue() +
                 ", audioJackReader=" + audioJackReader.getValue() +
                 ", bluetoothReader=" + bluetoothReader.getValue() +
-                ", apiKey=" + apiKey.getValue() +
-                ", publicKey=" + publicKey.getValue() +
                 '}';
     }
 }

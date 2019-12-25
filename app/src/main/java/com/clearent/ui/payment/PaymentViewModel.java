@@ -1,18 +1,11 @@
 package com.clearent.ui.payment;
 
 import android.app.Application;
-import android.content.Context;
 
 import com.clearent.Constants;
-import com.clearent.idtech.android.PublicOnReceiverListener;
-import com.clearent.payment.CardReaderService;
-import com.clearent.payment.ManualEntryService;
-import com.idtechproducts.device.ReaderInfo;
 
 import androidx.lifecycle.AndroidViewModel;
-import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.ViewModel;
 
 public class PaymentViewModel extends AndroidViewModel {
 

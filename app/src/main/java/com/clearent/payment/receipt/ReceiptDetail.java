@@ -1,4 +1,4 @@
-package com.clearent.payment;
+package com.clearent.payment.receipt;
 
 import com.google.gson.annotations.SerializedName;
 

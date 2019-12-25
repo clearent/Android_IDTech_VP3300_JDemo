@@ -1,10 +1,10 @@
-package com.clearent.payment;
+package com.clearent.payment.receipt;
 
 import com.clearent.idtech.android.PublicOnReceiverListener;
 
-public class SampleReceiptImpl implements SampleReceipt {
+public class PostReceiptImpl implements PostReceipt {
 
-    public SampleReceiptImpl() {
+    public PostReceiptImpl() {
     }
 
     @Override

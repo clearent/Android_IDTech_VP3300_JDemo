@@ -36,16 +36,16 @@ public class SettingsViewModel extends AndroidViewModel {
     public SettingsViewModel(Application app) {
         super(app);
         prodEnvironment = new MutableLiveData<>();
-        prodEnvironment.setValue(0);
+        prodEnvironment.setValue(LocalCache.getProdValue(getApplication()));
         sandboxEnvironment = new MutableLiveData<>();
-        sandboxEnvironment.setValue(1);
+        sandboxEnvironment.setValue(LocalCache.getSandboxValue(getApplication()));
 
         environment = new MutableLiveData<>();
 
         audioJackReader = new MutableLiveData<>();
-        audioJackReader.setValue(0);
+        audioJackReader.setValue(LocalCache.getAudioJackValue(getApplication()));
         bluetoothReader = new MutableLiveData<>();
-        bluetoothReader.setValue(1);
+        bluetoothReader.setValue(LocalCache.getBluetoothReaderValue(getApplication()));
 
         last5OfBluetoothReader = new MutableLiveData<>();
         last5OfBluetoothReader.setValue(LocalCache.getSelectedBluetoothDeviceLast5(getApplication()));
@@ -54,24 +54,24 @@ public class SettingsViewModel extends AndroidViewModel {
         publicKey = new MutableLiveData<>();
 
         enableContactless = new MutableLiveData<>();
-        enableContactless.setValue(true);
+        enableContactless.setValue(LocalCache.getEnableContactlessValue(getApplication()));
 
         readerConnected = new MutableLiveData<>();
 
         enable2In1Mode = new MutableLiveData<>();
-        enable2In1Mode.setValue(false);
+        enable2In1Mode.setValue(LocalCache.getEnable2InModeValue(getApplication()));
 
         clearContactConfigurationCache = new MutableLiveData<>();
-        clearContactConfigurationCache.setValue(false);
+        clearContactConfigurationCache.setValue(LocalCache.getClearContactConfigValue(getApplication()));
 
         clearContactlessConfigurationCache = new MutableLiveData<>();
-        clearContactlessConfigurationCache.setValue(false);
+        clearContactlessConfigurationCache.setValue(LocalCache.getClearContactlessConfigValue(getApplication()));
 
         configureContact = new MutableLiveData<>();
-        configureContact.setValue(false);
+        configureContact.setValue(LocalCache.getConfigureContactValue(getApplication()));
 
         configureContactless = new MutableLiveData<>();
-        configureContactless.setValue(false);
+        configureContactless.setValue(LocalCache.getConfigureContactlessValue(getApplication()));
 
     }
 

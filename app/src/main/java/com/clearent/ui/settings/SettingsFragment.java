@@ -80,7 +80,7 @@ public class SettingsFragment extends Fragment implements PublicOnReceiverListen
                 ViewModelProviders.of(getActivity()).get(SettingsViewModel.class);
         root = inflater.inflate(R.layout.fragment_configure, container, false);
 
-        observeConfigurationValues(root);
+        syncLocalCache(root);
         bindButtons(root);
 
         final TextView apiKeytextView = root.findViewById(R.id.settings_apikey);
@@ -89,8 +89,7 @@ public class SettingsFragment extends Fragment implements PublicOnReceiverListen
         final TextView publicKeyTextView = root.findViewById(R.id.settings_publickey);
         publicKeyTextView.setText(Constants.PUBLIC_KEY);
 
-        final TextView last5View = root.findViewById(R.id.settings_last_five_of_reader);
-        last5View.setText(settingsViewModel.getLast5OfBluetoothReader().getValue());
+        updateViewWithModel();
 
         updateReaderConnected("Reader Disconnected ❌");
 
@@ -99,19 +98,62 @@ public class SettingsFragment extends Fragment implements PublicOnReceiverListen
         return root;
     }
 
+    private void updateViewWithModel() {
+        final TextView last5View = root.findViewById(R.id.settings_last_five_of_reader);
+        last5View.setText(settingsViewModel.getLast5OfBluetoothReader().getValue());
+
+        final RadioButton prodEnvRadioButton = root.findViewById(R.id.settings_prod_env);
+        prodEnvRadioButton.setChecked(settingsViewModel.getProdEnvironment().getValue() == 1 ? true : false);
+
+        final RadioButton sandBoxEnvRadioButton = root.findViewById(R.id.settings_sandbox_env);
+        sandBoxEnvRadioButton.setChecked(settingsViewModel.getSandboxEnvironment().getValue() == 1 ? true : false);
+
+        final RadioButton audioJackRadioButton = root.findViewById(R.id.settings_audiojack_reader);
+        audioJackRadioButton.setChecked(settingsViewModel.getAudioJackReader().getValue() == 1 ? true : false);
+
+        final RadioButton radioButton = root.findViewById(R.id.settings_bluetooth_reader);
+        radioButton.setChecked(settingsViewModel.getBluetoothReader().getValue() == 1 ? true : false);
+
+        final CheckBox enableContactlessCheckBox = root.findViewById(R.id.enableContactless);
+        enableContactlessCheckBox.setChecked(settingsViewModel.getEnableContactless().getValue());
+
+        final CheckBox enableContactlessConfigurationCheckBox = root.findViewById(R.id.checkboxContactlessConfigure);
+        enableContactlessConfigurationCheckBox.setChecked(settingsViewModel.getConfigureContactless().getValue());
+
+        final CheckBox enableContactConfigurationCheckBox = root.findViewById(R.id.checkboxAutoConfigure);
+        enableContactConfigurationCheckBox.setChecked(settingsViewModel.getConfigureContact().getValue());
+
+
+        final CheckBox clearContactlessCacheCheckbox = root.findViewById(R.id.clearContactlessCache);
+        clearContactlessCacheCheckbox.setChecked(settingsViewModel.getClearContactlessConfigurationCache().getValue());
+
+
+        final CheckBox clearContactCacheCheckbox = root.findViewById(R.id.clearReaderCache);
+        clearContactCacheCheckbox.setChecked(settingsViewModel.getClearContactConfigurationCache().getValue());
+
+        final CheckBox enable2In1ModeCheckbox = root.findViewById(R.id.enable2In1Mode);
+        enable2In1ModeCheckbox.setChecked(settingsViewModel.getEnable2In1Mode().getValue());
+    }
+
     @Override
     public void onPause() {
         super.onPause();
         releaseSDK();
-        updateViewModel();
+        updateModelFromView();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        releaseSDK();
+        updateModelFromView();
     }
 
     @Override
     public void onResume() {
         super.onResume();
 
-        //final TextView last5View = root.findViewById(R.id.settings_last_five_of_reader);
-        //last5View.setText(settingsViewModel.getSearchDeviceName().getValue());
+        updateViewWithModel();
     }
 
     public void releaseSDK() {
@@ -153,7 +195,7 @@ public class SettingsFragment extends Fragment implements PublicOnReceiverListen
         });
     }
 
-    private void observeConfigurationValues(final View root) {
+    private void syncLocalCache(final View root) {
 
         final TextView last5View = root.findViewById(R.id.settings_last_five_of_reader);
 
@@ -174,6 +216,7 @@ public class SettingsFragment extends Fragment implements PublicOnReceiverListen
             @Override
             public void onChanged(Integer onOff) {
                 settingsProdEnvironment = onOff == 0 ? false : true;
+                LocalCache.setProdValue(getActivity().getApplicationContext(), onOff);
             }
         });
 
@@ -181,12 +224,14 @@ public class SettingsFragment extends Fragment implements PublicOnReceiverListen
             @Override
             public void onChanged(Integer onOff) {
                 settingsBluetoothReader = onOff == 0 ? false : true;
+                LocalCache.setBluetoothReaderValue(getActivity().getApplicationContext(), onOff);
             }
         });
         settingsViewModel.getAudioJackReader().observe(this, new Observer<Integer>() {
             @Override
             public void onChanged(Integer onOff) {
                 settingsAudioJackReader = onOff == 0 ? false : true;
+                LocalCache.setAudioJackValue(getActivity().getApplicationContext(), onOff);
 
             }
         });
@@ -194,24 +239,28 @@ public class SettingsFragment extends Fragment implements PublicOnReceiverListen
             @Override
             public void onChanged(Boolean enabled) {
                 enableContactless = enabled;
+                LocalCache.setEnableContactlessValue(getActivity().getApplicationContext(), enabled);
             }
         });
         settingsViewModel.getEnable2In1Mode().observe(this, new Observer<Boolean>() {
             @Override
             public void onChanged(Boolean enabled) {
                 enable2In1Mode = enabled;
+                LocalCache.setEnable2InModeValue(getActivity().getApplicationContext(), enabled);
             }
         });
         settingsViewModel.getClearContactConfigurationCache().observe(this, new Observer<Boolean>() {
             @Override
             public void onChanged(Boolean enabled) {
                 clearContactCache = enabled;
+                LocalCache.setClearContactConfigValue(getActivity().getApplicationContext(), enabled);
             }
         });
         settingsViewModel.getClearContactlessConfigurationCache().observe(this, new Observer<Boolean>() {
             @Override
             public void onChanged(Boolean enabled) {
                 clearContactlessCache = enabled;
+                LocalCache.setClearContactlessConfigValue(getActivity().getApplicationContext(), enabled);
             }
         });
 
@@ -219,6 +268,7 @@ public class SettingsFragment extends Fragment implements PublicOnReceiverListen
             @Override
             public void onChanged(String s) {
                 last5View.setText(s);
+                LocalCache.setSelectedBluetoothDeviceLast5(getActivity().getApplicationContext(), s);
             }
         });
     }
@@ -375,7 +425,7 @@ public class SettingsFragment extends Fragment implements PublicOnReceiverListen
         public void onClick(View arg0) {
 
             configuring = false;
-            updateViewModel();
+            updateModelFromView();
 
             if (cardReaderService == null) {
                 initCardReaderService();
@@ -410,13 +460,13 @@ public class SettingsFragment extends Fragment implements PublicOnReceiverListen
     public class SelectBluetoothReaderButtonListener implements View.OnClickListener {
         public void onClick(View arg0) {
 
-            updateViewModel();
+            updateModelFromView();
             NavController navController = Navigation.findNavController(getActivity(), R.id.nav_host_fragment);
             navController.navigate(R.id.nav_bluetooth_scan);
         }
     }
 
-    private void updateViewModel() {
+    private void updateModelFromView() {
 
         final TextView apiKeytextView = root.findViewById(R.id.settings_apikey);
         settingsViewModel.getApiKey().setValue(apiKeytextView.getText().toString());

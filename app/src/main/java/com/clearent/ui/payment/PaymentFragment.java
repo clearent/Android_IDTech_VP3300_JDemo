@@ -112,7 +112,7 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
     public void onPause() {
         super.onPause();
         releaseSDK();
-        updateViewModel();
+        updateModelFromView();
     }
 
     private void observeConfigurationValues(final View root) {
@@ -210,7 +210,7 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
 
     }
 
-    private void updateViewModel() {
+    private void updateModelFromView() {
         final TextView textAmountView = root.findViewById(R.id.textAmount);
         paymentViewModel.getPaymentAmount().setValue(textAmountView.getText().toString());
 
@@ -668,7 +668,7 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
     public class SwipeButtonListener implements View.OnClickListener {
         public void onClick(View arg0) {
 
-            updateViewModel();
+            updateModelFromView();
             runningManualEntry = false;
 
             if (cardReaderService == null) {

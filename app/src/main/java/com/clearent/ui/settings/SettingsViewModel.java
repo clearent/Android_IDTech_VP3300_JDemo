@@ -28,9 +28,6 @@ public class SettingsViewModel extends AndroidViewModel {
     private MutableLiveData<Integer> audioJackReader;
     private MutableLiveData<Integer> bluetoothReader;
 
-    private MutableLiveData<String> apiKey;
-    private MutableLiveData<String> publicKey;
-
     private MutableLiveData<String> last5OfBluetoothReader;
 
     public SettingsViewModel(Application app) {
@@ -49,9 +46,6 @@ public class SettingsViewModel extends AndroidViewModel {
 
         last5OfBluetoothReader = new MutableLiveData<>();
         last5OfBluetoothReader.setValue(LocalCache.getSelectedBluetoothDeviceLast5(getApplication()));
-
-        apiKey = new MutableLiveData<>();
-        publicKey = new MutableLiveData<>();
 
         enableContactless = new MutableLiveData<>();
         enableContactless.setValue(LocalCache.getEnableContactlessValue(getApplication()));
@@ -137,14 +131,6 @@ public class SettingsViewModel extends AndroidViewModel {
 
     public MutableLiveData<Integer> getBluetoothReader() {
         return bluetoothReader;
-    }
-
-    public MutableLiveData<String> getApiKey() {
-        return apiKey;
-    }
-
-    public MutableLiveData<String> getPublicKey() {
-        return publicKey;
     }
 
     @Override

@@ -9,11 +9,11 @@ public class PostPaymentImpl implements PostPayment {
     public PostPaymentImpl() {
     }
 
-    public PostTransactionRequest createPostTransactionRequest(TransactionToken transactionToken, String amount, String apiKey) {
+    public PostTransactionRequest createPostTransactionRequest(TransactionToken transactionToken, String amount, String apiKey, String baseUrl) {
         PostTransactionRequest postTransactionRequest = new PostTransactionRequest();
         postTransactionRequest.setTransactionToken(transactionToken);
         postTransactionRequest.setApiKey(apiKey);
-        postTransactionRequest.setBaseUrl(Constants.BASE_URL);
+        postTransactionRequest.setBaseUrl(baseUrl);
         SaleTransaction saleTransaction;
         if (amount == null || amount.length() == 0) {
             saleTransaction = new SaleTransaction("1.00");

@@ -31,7 +31,6 @@ import com.idtechproducts.device.StructConfigParameters;
 import com.idtechproducts.device.bluetooth.BluetoothLEController;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
@@ -82,12 +81,6 @@ public class SettingsFragment extends Fragment implements PublicOnReceiverListen
 
         syncLocalCache(root);
         bindButtons(root);
-
-        final TextView apiKeytextView = root.findViewById(R.id.settings_apikey);
-        apiKeytextView.setText(Constants.API_KEY_FOR_DEMO_ONLY);
-
-        final TextView publicKeyTextView = root.findViewById(R.id.settings_publickey);
-        publicKeyTextView.setText(Constants.PUBLIC_KEY);
 
         updateViewWithModel();
 
@@ -198,19 +191,6 @@ public class SettingsFragment extends Fragment implements PublicOnReceiverListen
     private void syncLocalCache(final View root) {
 
         final TextView last5View = root.findViewById(R.id.settings_last_five_of_reader);
-
-        settingsViewModel.getApiKey().observe(this, new Observer<String>() {
-            @Override
-            public void onChanged(@Nullable String s) {
-                settingsApiKey = s;
-            }
-        });
-        settingsViewModel.getPublicKey().observe(this, new Observer<String>() {
-            @Override
-            public void onChanged(@Nullable String s) {
-                settingsPublicKey = s;
-            }
-        });
 
         settingsViewModel.getProdEnvironment().observe(this, new Observer<Integer>() {
             @Override
@@ -475,12 +455,6 @@ public class SettingsFragment extends Fragment implements PublicOnReceiverListen
 
     private void updateModelFromView() {
 
-        final TextView apiKeytextView = root.findViewById(R.id.settings_apikey);
-        settingsViewModel.getApiKey().setValue(apiKeytextView.getText().toString());
-
-        final TextView publicKeyTextView = root.findViewById(R.id.settings_publickey);
-        settingsViewModel.getPublicKey().setValue(publicKeyTextView.getText().toString());
-
         final RadioButton prodEnvRadioButton = root.findViewById(R.id.settings_prod_env);
         settingsViewModel.getProdEnvironment().setValue(prodEnvRadioButton.isChecked() ? 1 : 0);
 
@@ -608,14 +582,14 @@ public class SettingsFragment extends Fragment implements PublicOnReceiverListen
             device_type = ReaderInfo.DEVICE_TYPE.DEVICE_VP3300_AJ;
         }
 
-        String baseUrl = Constants.BASE_URL;
+        String baseUrl = Constants.SB_BASE_URL;
+        String publicKey = Constants.SB_PUBLIC_KEY;
         Integer prodEnvironment = settingsViewModel.getProdEnvironment().getValue();
         boolean prodEnvironmentEnabled = prodEnvironment == 0 ? false : true;
         if (prodEnvironmentEnabled) {
             baseUrl = Constants.PROD_BASE_URL;
-
+            publicKey = Constants.PROD_PUBLIC_KEY;
         }
-        String publicKey = settingsViewModel.getPublicKey().getValue();
 
         cardReaderService = new CardReaderService(device_type, this, getContext(), baseUrl, publicKey, true);
 

@@ -61,8 +61,6 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
 
     private boolean isReady = false;
 
-    private String settingsApiKey = Constants.API_KEY_FOR_DEMO_ONLY;
-    private String settingsPublicKey = Constants.PUBLIC_KEY;
     private Boolean settingsProdEnvironment = false;
     private Boolean settingsBluetoothReader = false;
     private Boolean settingsAudioJackReader = false;
@@ -116,18 +114,6 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
     }
 
     private void observeConfigurationValues(final View root) {
-        settingsViewModel.getApiKey().observe(getActivity(), new Observer<String>() {
-            @Override
-            public void onChanged(@Nullable String s) {
-                settingsApiKey = s;
-            }
-        });
-        settingsViewModel.getPublicKey().observe(getActivity(), new Observer<String>() {
-            @Override
-            public void onChanged(@Nullable String s) {
-                settingsPublicKey = s;
-            }
-        });
 
         settingsViewModel.getProdEnvironment().observe(getActivity(), new Observer<Integer>() {
             @Override
@@ -293,7 +279,18 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
     public void successfulTransactionToken(final TransactionToken transactionToken) {
         handler.post(doSuccessUpdates);
         PostPayment postPayment = new PostPaymentImpl();
-        PostTransactionRequest postTransactionRequest = postPayment.createPostTransactionRequest(transactionToken, paymentViewModel.getPaymentAmount().getValue(), settingsApiKey);
+
+        String apiKey = Constants.SB_API_KEY;
+        if (settingsProdEnvironment) {
+            apiKey = Constants.PROD_API_KEY;
+        }
+
+        String baseUrl = Constants.SB_BASE_URL;
+        if (settingsProdEnvironment) {
+            baseUrl = Constants.PROD_BASE_URL;
+        }
+
+        PostTransactionRequest postTransactionRequest = postPayment.createPostTransactionRequest(transactionToken, paymentViewModel.getPaymentAmount().getValue(), apiKey, baseUrl);
         postPayment.doSale(postTransactionRequest, this);
     }
 
@@ -507,8 +504,14 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
     private void runSampleReceipt(String line) {
         String[] parts = line.split(":");
         ReceiptRequest receiptRequest = new ReceiptRequest();
-        receiptRequest.setApiKey(settingsApiKey);
-        String baseUrl = Constants.BASE_URL;
+
+        if (settingsProdEnvironment) {
+            receiptRequest.setApiKey(Constants.PROD_API_KEY);
+        } else {
+            receiptRequest.setApiKey(Constants.SB_API_KEY);
+        }
+
+        String baseUrl = Constants.SB_BASE_URL;
         if (settingsProdEnvironment) {
             baseUrl = Constants.PROD_BASE_URL;
         }
@@ -644,12 +647,18 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
 
     @Override
     public String getPaymentsBaseUrl() {
-        return Constants.BASE_URL;
+        if (settingsProdEnvironment) {
+           return Constants.PROD_BASE_URL;
+        }
+        return Constants.SB_BASE_URL;
     }
 
     @Override
     public String getPaymentsPublicKey() {
-        return Constants.PUBLIC_KEY;
+        if (settingsProdEnvironment) {
+            return Constants.PROD_PUBLIC_KEY;
+        }
+        return Constants.SB_PUBLIC_KEY;
     }
 
     @Override
@@ -717,12 +726,15 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
         if (settingsAudioJackReader) {
             device_type = ReaderInfo.DEVICE_TYPE.DEVICE_VP3300_AJ;
         }
-        String baseUrl = Constants.BASE_URL;
+
+        String baseUrl = Constants.SB_BASE_URL;
+        String publicKey = Constants.SB_PUBLIC_KEY;
         if (settingsProdEnvironment) {
             baseUrl = Constants.PROD_BASE_URL;
+            publicKey = Constants.PROD_PUBLIC_KEY;
         }
 
-        cardReaderService = new CardReaderService(device_type, this, getContext(), baseUrl, settingsPublicKey, true);
+        cardReaderService = new CardReaderService(device_type, this, getContext(), baseUrl, publicKey, true);
 
         boolean device_setDeviceTypeResponse = cardReaderService.device_setDeviceType(device_type);
         if (!device_setDeviceTypeResponse) {

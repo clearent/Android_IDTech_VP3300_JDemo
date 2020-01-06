@@ -306,6 +306,11 @@ public class SettingsFragment extends Fragment implements PublicOnReceiverListen
 
     @Override
     public void handleConfigurationErrors(String message) {
+
+        if (configurationDialog != null && configurationDialog.isShowing()) {
+            addPopupMessage(configurationDialog,message);
+        }
+
         Toast.makeText(getActivity(), "Configuration Failed \uD83D\uDC4E", Toast.LENGTH_LONG).show();
     }
 
@@ -435,6 +440,8 @@ public class SettingsFragment extends Fragment implements PublicOnReceiverListen
                 return;
             }
 
+            displayConfigurationPopup();
+
             final TextView last5View = root.findViewById(R.id.settings_last_five_of_reader);
             String last5OfBluetoothReader = last5View.getText().toString();
             if (last5OfBluetoothReader == null || "".equals(last5OfBluetoothReader)) {
@@ -522,7 +529,6 @@ public class SettingsFragment extends Fragment implements PublicOnReceiverListen
                 cardReaderService.setReaderContactlessConfiguredSharedPreference(settingsViewModel.getClearContactlessConfigurationCache().getValue());
             }
             configuring = true;
-            displayConfigurationPopup();
 
             cardReaderService.addRemoteLogRequest(Constants.getSoftwareTypeAndVersion(), settingsViewModel.toString());
 

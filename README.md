@@ -16,3 +16,6 @@ that come back from the framework will display in the pop up. When you see a mes
 When the card is converted to a transaction token (JWT) the demo will run a sale for the amount you provided. The transaction will run against the environment you selected. The end result is a success message.
 
 The demo has the apikey hard coded in it. This is not recommended in production since it's a secret key that only you and Clearent should know about.
+
+
+[Release Notes](docs/RELEASE_NOTES.md)

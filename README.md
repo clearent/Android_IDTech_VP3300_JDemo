@@ -1,6 +1,6 @@
 ![Screenshot](docs/clearent_logo.jpg)
 
-# Android IDTech VP3300 Java Demo :phone: :credit_card:
+# Android IDTech VP3300 Java Demo :iphone: :credit_card:
 
 :new: This demo shows a common way to interact with the clearent idtech framework without all of the framework capabilities our other demo shows.
 

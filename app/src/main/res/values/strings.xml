@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     
-    <string name="app_name">Clearent IDTech JDemo 1.126.0</string>
+    <string name="app_name">Clearent IDTech JDemo 1.135.2.0.0</string>
     <string name="location">Location</string>
     <string name="cant_read_folder">folder can\'t be read!</string>
     <string name="nnew">New</string>

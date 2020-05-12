@@ -13,6 +13,8 @@ public class SettingsViewModel extends AndroidViewModel {
     private MutableLiveData<String> readerConnected;
 
     private MutableLiveData<Boolean> enable2In1Mode;
+    private MutableLiveData<Boolean> searchBluetooth;
+    private MutableLiveData<Boolean> connectToFirstBluetooth;
 
     private MutableLiveData<Boolean> clearContactConfigurationCache;
     private MutableLiveData<Boolean> clearContactlessConfigurationCache;
@@ -27,8 +29,10 @@ public class SettingsViewModel extends AndroidViewModel {
 
     private MutableLiveData<Integer> audioJackReader;
     private MutableLiveData<Integer> bluetoothReader;
+    private MutableLiveData<Integer> bluetoothReaderUsb;
 
     private MutableLiveData<String> last5OfBluetoothReader;
+    private MutableLiveData<String> bluetoothFriendlyName;
 
     public SettingsViewModel(Application app) {
         super(app);
@@ -43,6 +47,11 @@ public class SettingsViewModel extends AndroidViewModel {
         audioJackReader.setValue(LocalCache.getAudioJackValue(getApplication()));
         bluetoothReader = new MutableLiveData<>();
         bluetoothReader.setValue(LocalCache.getBluetoothReaderValue(getApplication()));
+        bluetoothReaderUsb = new MutableLiveData<>();
+        bluetoothReaderUsb.setValue(LocalCache.getBluetoothReaderUsbValue(getApplication()));
+
+        bluetoothFriendlyName = new MutableLiveData<>();
+        bluetoothFriendlyName.setValue(LocalCache.getSelectedUsedBluetoothFriendlyName(getApplication()));
 
         last5OfBluetoothReader = new MutableLiveData<>();
         last5OfBluetoothReader.setValue(LocalCache.getSelectedBluetoothDeviceLast5(getApplication()));
@@ -54,6 +63,12 @@ public class SettingsViewModel extends AndroidViewModel {
 
         enable2In1Mode = new MutableLiveData<>();
         enable2In1Mode.setValue(LocalCache.getEnable2InModeValue(getApplication()));
+
+        searchBluetooth = new MutableLiveData<>();
+        searchBluetooth.setValue(LocalCache.getSearchBluetoothValue(getApplication()));
+
+        connectToFirstBluetooth = new MutableLiveData<>();
+        connectToFirstBluetooth.setValue(LocalCache.getConnectToFirstBluetoothFoundValue(getApplication()));
 
         clearContactConfigurationCache = new MutableLiveData<>();
         clearContactConfigurationCache.setValue(LocalCache.getClearContactConfigValue(getApplication()));
@@ -67,6 +82,30 @@ public class SettingsViewModel extends AndroidViewModel {
         configureContactless = new MutableLiveData<>();
         configureContactless.setValue(LocalCache.getConfigureContactlessValue(getApplication()));
 
+    }
+
+    public MutableLiveData<Boolean> getSearchBluetooth() {
+        return searchBluetooth;
+    }
+
+    public void setSearchBluetooth(MutableLiveData<Boolean> searchBluetooth) {
+        this.searchBluetooth = searchBluetooth;
+    }
+
+    public MutableLiveData<Boolean> getConnectToFirstBluetooth() {
+        return connectToFirstBluetooth;
+    }
+
+    public void setConnectToFirstBluetooth(MutableLiveData<Boolean> connectToFirstBluetooth) {
+        this.connectToFirstBluetooth = connectToFirstBluetooth;
+    }
+
+    public MutableLiveData<String> getBluetoothFriendlyName() {
+        return bluetoothFriendlyName;
+    }
+
+    public void setBluetoothFriendlyName(MutableLiveData<String> bluetoothFriendlyName) {
+        this.bluetoothFriendlyName = bluetoothFriendlyName;
     }
 
     public MutableLiveData<String> getLast5OfBluetoothReader() {
@@ -132,6 +171,11 @@ public class SettingsViewModel extends AndroidViewModel {
     public MutableLiveData<Integer> getBluetoothReader() {
         return bluetoothReader;
     }
+
+    public MutableLiveData<Integer> getBluetoothReaderUsb() {
+        return bluetoothReaderUsb;
+    }
+
 
     @Override
     public String toString() {

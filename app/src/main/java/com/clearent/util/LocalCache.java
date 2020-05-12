@@ -11,6 +11,8 @@ public class LocalCache {
     public static String SHARED_PREFERENCES_SELECTED_BLUETOOTH_DEVICE_LAST5 = "SelectedBluetoothDeviceLast5";
     public static String SHARED_PREFERENCES_NAME = "ClearentJdemo";
 
+    public static String SHARED_PREFERENCES_SELECTED_BLUETOOTH_FRIENDLYNAME = "SelectedLastBluetoothDeviceFriendlyName";
+
     public static void setSelectedBluetoothDeviceLast5(Context context, String selectedBluetoothDeviceLast5) {
         SharedPreferences settings = context.getSharedPreferences(SHARED_PREFERENCES_NAME, MODE_PRIVATE);
         SharedPreferences.Editor editor = settings.edit();
@@ -21,6 +23,18 @@ public class LocalCache {
     public static String getSelectedBluetoothDeviceLast5(Context context) {
         SharedPreferences settings = context.getSharedPreferences(SHARED_PREFERENCES_NAME, MODE_PRIVATE);
         return settings.getString(SHARED_PREFERENCES_SELECTED_BLUETOOTH_DEVICE_LAST5, "");
+    }
+
+    public static void setSelectedUsedBluetoothFriendlyName(Context context, String selectedBluetoothFriendlyName) {
+        SharedPreferences settings = context.getSharedPreferences(SHARED_PREFERENCES_NAME, MODE_PRIVATE);
+        SharedPreferences.Editor editor = settings.edit();
+        editor.putString(SHARED_PREFERENCES_SELECTED_BLUETOOTH_FRIENDLYNAME, selectedBluetoothFriendlyName);
+        editor.commit();
+    }
+
+    public static String getSelectedUsedBluetoothFriendlyName(Context context) {
+        SharedPreferences settings = context.getSharedPreferences(SHARED_PREFERENCES_NAME, MODE_PRIVATE);
+        return settings.getString(SHARED_PREFERENCES_SELECTED_BLUETOOTH_FRIENDLYNAME, null);
     }
 
 
@@ -68,11 +82,22 @@ public class LocalCache {
         editor.commit();
     }
 
+    public static void setBluetoothReaderUsbValue(Context context, Integer value) {
+        SharedPreferences settings = context.getSharedPreferences(SHARED_PREFERENCES_NAME, MODE_PRIVATE);
+        SharedPreferences.Editor editor = settings.edit();
+        editor.putInt("SettingsBluetoothUsbValue", value);
+        editor.commit();
+    }
+
     public static Integer getBluetoothReaderValue(Application application) {
         SharedPreferences settings = application.getSharedPreferences(SHARED_PREFERENCES_NAME, MODE_PRIVATE);
         return settings.getInt("SettingsBluetoothValue", 1);
     }
 
+    public static Integer getBluetoothReaderUsbValue(Application application) {
+        SharedPreferences settings = application.getSharedPreferences(SHARED_PREFERENCES_NAME, MODE_PRIVATE);
+        return settings.getInt("SettingsBluetoothUsbValue", 1);
+    }
 
     public static void setEnableContactlessValue(Context context, Boolean value) {
         SharedPreferences settings = context.getSharedPreferences(SHARED_PREFERENCES_NAME, MODE_PRIVATE);
@@ -99,6 +124,31 @@ public class LocalCache {
         return settings.getBoolean("SettingsEnable2In1ModeValue", false);
     }
 
+
+    public static void setSearchBluetoothValue(Context context, Boolean value) {
+        SharedPreferences settings = context.getSharedPreferences(SHARED_PREFERENCES_NAME, MODE_PRIVATE);
+        SharedPreferences.Editor editor = settings.edit();
+        editor.putBoolean("SettingsSearchBluetoothValue", value);
+        editor.commit();
+    }
+
+
+    public static Boolean getSearchBluetoothValue(Application application) {
+        SharedPreferences settings = application.getSharedPreferences(SHARED_PREFERENCES_NAME, MODE_PRIVATE);
+        return settings.getBoolean("SettingsSearchBluetoothValue", false);
+    }
+
+    public static void setConnectToFirstBluetoothFoundValue(Context context, Boolean value) {
+        SharedPreferences settings = context.getSharedPreferences(SHARED_PREFERENCES_NAME, MODE_PRIVATE);
+        SharedPreferences.Editor editor = settings.edit();
+        editor.putBoolean("SettingsConnectToFirstBluetoothFoundValue", value);
+        editor.commit();
+    }
+
+    public static Boolean getConnectToFirstBluetoothFoundValue(Application application) {
+        SharedPreferences settings = application.getSharedPreferences(SHARED_PREFERENCES_NAME, MODE_PRIVATE);
+        return settings.getBoolean("SettingsConnectToFirstBluetoothFoundValue", false);
+    }
 
     public static void setClearContactConfigValue(Context context, Boolean value) {
         SharedPreferences settings = context.getSharedPreferences(SHARED_PREFERENCES_NAME, MODE_PRIVATE);

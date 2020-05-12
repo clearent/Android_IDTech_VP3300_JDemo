@@ -1,20 +1,33 @@
 package com.clearent.ui.payment;
 
 import android.app.AlertDialog;
-import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.bluetooth.BluetoothDevice;
 import android.content.DialogInterface;
+import android.graphics.Bitmap;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.clearent.Constants;
+import com.clearent.idtech.android.domain.ClearentFeedback;
+import com.clearent.idtech.android.domain.ClearentResponse;
+import com.clearent.idtech.android.domain.FeedbackType;
+import com.clearent.idtech.android.domain.ReaderInterfaceMode;
+import com.clearent.idtech.android.domain.connection.AudioJack;
+import com.clearent.idtech.android.domain.connection.Bluetooth;
+import com.clearent.idtech.android.domain.connection.BluetoothSearchType;
 import com.clearent.payment.R;
 import com.clearent.idtech.android.PublicOnReceiverListener;
 import com.clearent.idtech.android.domain.CardProcessingResponse;
@@ -31,38 +44,32 @@ import com.clearent.payment.receipt.PostReceipt;
 import com.clearent.payment.receipt.PostReceiptImpl;
 import com.clearent.payment.PostPayment;
 import com.clearent.payment.PostPaymentImpl;
-import com.clearent.reader.bluetooth.BluetoothScanListener;
-import com.clearent.reader.bluetooth.BluetoothLeService;
-import com.clearent.reader.bluetooth.BluetoothScanMessage;
 import com.clearent.ui.settings.SettingsViewModel;
 import com.idtechproducts.device.Common;
-import com.idtechproducts.device.ErrorCode;
-import com.idtechproducts.device.ErrorCodeInfo;
 import com.idtechproducts.device.ReaderInfo;
 import com.idtechproducts.device.ReaderInfo.DEVICE_TYPE;
-import com.idtechproducts.device.ResDataStruct;
 import com.idtechproducts.device.StructConfigParameters;
-import com.idtechproducts.device.bluetooth.BluetoothLEController;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 
-public class PaymentFragment extends Fragment implements PublicOnReceiverListener, HasManualTokenizingSupport, BluetoothScanListener {
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.List;
+
+public class PaymentFragment extends Fragment implements PublicOnReceiverListener, HasManualTokenizingSupport {
 
     private PaymentViewModel paymentViewModel;
     private SettingsViewModel settingsViewModel;
     private AlertDialog transactionAlertDialog;
-    private String info = "";
     private Handler handler = new Handler();
     private Button swipeButton;
 
-    private boolean isReady = false;
-
     private Boolean settingsProdEnvironment = false;
     private Boolean settingsBluetoothReader = false;
+    private Boolean settingsBluetoothReaderUsb = false;
     private Boolean settingsAudioJackReader = false;
     private Boolean enableContactless = false;
     private Boolean enable2In1Mode = false;
@@ -73,14 +80,14 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
     private CardReaderService cardReaderService;
     private ManualEntryService manualEntryService;
 
-    private Boolean runningTransaction = false;
     private Boolean runningManualEntry = false;
 
-    private BluetoothLeService bluetoothLeService;
+    private Boolean runningPayment = false;
 
     View root = null;
     ViewGroup viewGroup;
     LayoutInflater layoutInflater;
+
 
 
     @Override
@@ -98,8 +105,6 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
         observeConfigurationValues(root);
 
         bindButtons(root);
-
-        bluetoothLeService = new BluetoothLeService(this, Constants.BLUETOOTH_SCAN_PERIOD);
 
         updateReaderConnected("Reader Disconnected ❌");
 
@@ -126,6 +131,12 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
             @Override
             public void onChanged(Integer onOff) {
                 settingsBluetoothReader = onOff == 0 ? false : true;
+            }
+        });
+        settingsViewModel.getBluetoothReaderUsb().observe(getActivity(), new Observer<Integer>() {
+            @Override
+            public void onChanged(Integer onOff) {
+                settingsBluetoothReaderUsb = onOff == 0 ? false : true;
             }
         });
         settingsViewModel.getAudioJackReader().observe(getActivity(), new Observer<Integer>() {
@@ -159,6 +170,13 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
             }
         });
 
+        settingsViewModel.getClearContactConfigurationCache().observe(this, new Observer<Boolean>() {
+            @Override
+            public void onChanged(Boolean enabled) {
+                clearContactCache = enabled;
+            }
+        });
+
         settingsViewModel.getClearContactlessConfigurationCache().observe(this, new Observer<Boolean>() {
             @Override
             public void onChanged(Boolean enabled) {
@@ -170,7 +188,7 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
             @Override
             public void onChanged(String s) {
                 last5OfBluetoothReader = s;
-                Common.setBLEDeviceName(s);
+               // Common.setBLEDeviceName(s);
             }
         });
 
@@ -179,9 +197,6 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
     private void updateReaderConnected(final String message) {
         getActivity().runOnUiThread(new Runnable() {
             public void run() {
-                if (transactionAlertDialog != null && transactionAlertDialog.isShowing()) {
-                    addPopupMessage(transactionAlertDialog, "Bluetooth disconnected. Press button on reader.");
-                }
                 final TextView readerConnectView = root.findViewById(R.id.readerConnected);
                 readerConnectView.setText(message);
             }
@@ -228,6 +243,7 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
         super.onActivityCreated(savedInstanceState);
     }
 
+
     @Override
     public void onDestroy() {
         if (cardReaderService != null) {
@@ -237,46 +253,18 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
         super.onDestroy();
     }
 
+    //Version 2 isReady is deprecated
+    @Deprecated
     @Override
     public void isReady() {
-//        if (cardReaderService.device_isConnected()) {
-//            updateReaderConnected("Reader Connected \uD83D\uDC9A️");
-//            if(reconnectingReader) {
-//                handler.post(doStartTransaction);
-//            }
-//            return;
-//        }
-
-        if (runningTransaction) {
-            return;
-        }
-
-        updateReaderConnected("Reader Ready ❤️");
-        if (!isReady && transactionAlertDialog != null && transactionAlertDialog.isShowing()) {
-            String amount = paymentViewModel.getPaymentAmount().getValue();
-            if (amount == null || "".equals(amount)) {
-                closePopup();
-                Toast.makeText(getActivity(), "Amount Required", Toast.LENGTH_LONG).show();
-                return;
-            } else {
-                handler.post(doStartTransaction);
-            }
-        } else if (!isReady && transactionAlertDialog != null && !transactionAlertDialog.isShowing()) {
-            String amount = paymentViewModel.getPaymentAmount().getValue();
-            if (amount == null || "".equals(amount)) {
-                Toast.makeText(getActivity(), "Amount Required", Toast.LENGTH_LONG).show();
-            } else {
-                transactionAlertDialog.show();
-                handler.post(doStartTransaction);
-            }
-        }
-
-        isReady = true;
+        //still supported but we are moving away from its usage to align our design with the one used in the iOS framework.
 
     }
 
     @Override
     public void successfulTransactionToken(final TransactionToken transactionToken) {
+        runningPayment = false;
+        Log.d("WATCH", "thread in successfulTransactionToken" + Thread.currentThread().getName());
         handler.post(doSuccessUpdates);
         PostPayment postPayment = new PostPaymentImpl();
 
@@ -322,18 +310,16 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
 
     }
 
+
     private Runnable doSuccessUpdates = new Runnable() {
         public void run() {
             if (transactionAlertDialog != null && transactionAlertDialog.isShowing()) {
                 if (runningManualEntry) {
                     addPopupMessage(transactionAlertDialog, "Card tokenized");
-                } else {
-                    addPopupMessage(transactionAlertDialog, "Please remove card");
+                } else if(runningPayment) {
+                    addPopupMessage(transactionAlertDialog, "Running transaction");
                 }
-                addPopupMessage(transactionAlertDialog, "Running transaction");
             }
-            handler.post(doUpdateStatus);
-            swipeButton.setEnabled(true);
         }
     };
 
@@ -351,36 +337,22 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
                 });
                 break;
             default:
-                getActivity().runOnUiThread(new Runnable() {
-                    public void run() {
-                        swipeButton.setEnabled(true);
-                        if (transactionAlertDialog != null && transactionAlertDialog.isShowing()) {
-                            addPopupMessage(transactionAlertDialog, cardProcessingResponse.getDisplayMessage());
-                        }
-                    }
-                });
         }
     }
 
     @Override
     public void handleManualEntryError(String message) {
-        info += "\nFailed to get a transaction token from a manually entered card. Error - " + message;
-        handler.post(doUpdateStatus);
         swipeButton.setEnabled(true);
     }
 
     @Override
     public void handleConfigurationErrors(String message) {
-        info += "\nThe reader failed to configure. Error - " + message;
-        handler.post(doUpdateStatus);
         handler.post(disablePopupWhenConfigurationFails);
     }
 
     private Runnable disablePopupWhenConfigurationFails = new Runnable() {
         public void run() {
-            if (transactionAlertDialog != null && transactionAlertDialog.isShowing()) {
-                closePopup();
-            }
+            closePopup();
         }
     };
 
@@ -389,19 +361,21 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
         if (cardReaderService != null) {
             releaseSDK();
         }
-        isReady = false;
     }
 
     private void displayTransactionPopup() {
         getActivity().runOnUiThread(new Runnable() {
             public void run() {
                 if (transactionAlertDialog != null) {
+                    TextView textView = (TextView) transactionAlertDialog.findViewById(R.id.popupMessages);
+                    if (textView != null) {
+                        textView.setText("");
+                    }
                     if (runningManualEntry) {
                         transactionAlertDialog.setTitle("Processing card");
                         addPopupMessage(transactionAlertDialog, "");
                     } else {
                         transactionAlertDialog.setTitle("Processing payment");
-                        addPopupMessage(transactionAlertDialog, "Wait for instructions...");
                     }
                     transactionAlertDialog.show();
                 } else {
@@ -412,7 +386,6 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
                         addPopupMessage(transactionAlertDialog, "");
                     } else {
                         transactionViewBuilder.setTitle("Processing payment");
-                        addPopupMessage(transactionAlertDialog, "Wait for instructions...");
                     }
 
                     View view = layoutInflater.inflate(R.layout.frame_swipe, viewGroup, false);
@@ -433,67 +406,64 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
                     transactionAlertDialog = transactionViewBuilder.create();
                     transactionAlertDialog.show();
                 }
-                if(!cardReaderService.device_isConnected()) {
-                    addPopupMessage(transactionAlertDialog,"Press button on reader");
-                }
             }
         });
     }
 
     private void closePopup() {
-        if (transactionAlertDialog != null) {
-            transactionAlertDialog.hide();
-            TextView textView = (TextView) transactionAlertDialog.findViewById(R.id.popupMessages);
-            if (textView != null) {
-                textView.setText("");
+
+        getActivity().runOnUiThread(new Runnable() {
+            public void run() {
+                if (transactionAlertDialog != null) {
+                    TextView textView = (TextView) transactionAlertDialog.findViewById(R.id.popupMessages);
+                    if (textView != null) {
+                        textView.setText("");
+                    }
+                    transactionAlertDialog.hide();
+                }
             }
-        }
+        });
+
     }
 
-    private void addPopupMessage(AlertDialog alertDialog, String message) {
-        if (alertDialog != null && alertDialog.isShowing()) {
+    private void addPopupMessage(final AlertDialog alertDialog, final String message) {
+
+        if (transactionAlertDialog != null) {
             TextView textView = (TextView) alertDialog.findViewById(R.id.popupMessages);
             if (textView == null) {
                 return;
             }
             textView.append(message + "\n");
+        } else {
+            Log.d("FAIL","dialog not initialized");
         }
+
     }
 
+    //TODO For the demo, keeping this in place to preserve the sample transaction and receipt logic
     public void lcdDisplay(int mode, final String[] lines, int timeout) {
         if (lines != null && lines.length > 0) {
+            // Log.i("CLEARENTLCD", lines[0]);
             getActivity().runOnUiThread(new Runnable() {
                 public void run() {
-                    if (lines[0].contains("TIME OUT")) {
-                        handler.post(doEnableButtons);
-                    }
-                    info += "\n";
-                    Log.i("WATCH1", lines[0]);
-                    info += lines[0] + "\n";
-                    handler.post(doUpdateStatus);
                     if (transactionAlertDialog != null && transactionAlertDialog.isShowing()) {
-                        addPopupMessage(transactionAlertDialog, lines[0]);
                         String checkTransactionMessage = "Transaction successful. Transaction Id:";
                         String checkReceiptMessage = "PostReceipt sent successfully";
                         String checkFailedTransactionFailed = "Transaction failed";
                         if (lines[0].contains(checkFailedTransactionFailed)) {
-                            if (transactionAlertDialog != null && transactionAlertDialog.isShowing()) {
-                                closePopup();
-                            }
+                            closePopup();
                             paymentViewModel.setSuccessfulTransaction(false);
                             showPaymentFailed();
                         } else if (lines[0].contains(checkTransactionMessage)) {
-                            if (transactionAlertDialog != null && transactionAlertDialog.isShowing()) {
-                                closePopup();
-                            }
+
+                            closePopup();
                             paymentViewModel.setSuccessfulTransaction(true);
                             showPaymentSuccess(lines[0]);
                             runSampleReceipt(lines[0]);
                         } else if (lines[0].contains(checkReceiptMessage)) {
+
                             Toast.makeText(getActivity(), "Sent PostReceipt", Toast.LENGTH_LONG).show();
-                            if (transactionAlertDialog != null && transactionAlertDialog.isShowing()) {
-                                closePopup();
-                            }
+                            closePopup();
                         }
                     }
                 }
@@ -526,46 +496,19 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
         postReceipt.doReceipt(receiptRequest, this);
     }
 
-    public void lcdDisplay(int mode, String[] lines, int timeout, byte[] languageCode, byte messageId) {
+    @Deprecated
+    public void lcdDisplay(int mode, final String[] lines, int timeout, byte[] languageCode, byte messageId) {
         //Clearent runs with a terminal major configuration of 5C, so no prompts. We should be able to
         //monitor all messaging using the other lcdDisplay method as well as the response and error handlers.
+        //  Log.i("CLEARENTLCD2", lines[0]);
     }
 
-    private int dialogId = 0;  //authenticate_dialog: 0 complete_emv_dialog: 1 language selection: 2 menu_display: 3
-
-    public void timerDelayRemoveDialog(long time, final Dialog d) {
-        new Handler().postDelayed(new Runnable() {
-            public void run() {
-                if (d.isShowing()) {
-                    d.dismiss();
-                    switch (dialogId) {
-                        case 0:
-                            info = "EMV Transaction Declined.  Authentication Time Out.\n";
-                            break;
-                        case 1:
-                            info = "EMV Transaction Declined.  Complete EMV Time Out.\n";
-                            break;
-                        case 2:
-                            info = "EMV Transaction Language Selection Time Out.\n";
-                            break;
-                        case 3:
-                            info = "EMV Transaction Menu Selection Time Out.\n";
-                            break;
-                    }
-                    handler.post(doUpdateStatus);
-                    ResDataStruct resData = new ResDataStruct();
-                    cardReaderService.emv_cancelTransaction(resData);
-                    swipeButton.setEnabled(true);
-                }
-            }
-        }, time);
-    }
 
     public void releaseSDK() {
         if (cardReaderService != null) {
-            cardReaderService.unregisterListen();
-            cardReaderService.release();
             try {
+                cardReaderService.unregisterListen();
+                cardReaderService.release();
                 Thread.sleep(2000);
             } catch (InterruptedException e) {
                 //do nothing
@@ -573,82 +516,67 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
         }
     }
 
-    private Runnable doUpdateStatus = new Runnable() {
-        public void run() {
-            //   infoText.setText(info);
-        }
-    };
-
     private Runnable doEnableButtons = new Runnable() {
         public void run() {
             swipeButton.setEnabled(true);
         }
     };
 
-    private Runnable doSwipeProgressBar = new Runnable() {
-        public void run() {
-            runningTransaction = false;
-            if (cardReaderService.device_isConnected()) {
-                if (transactionAlertDialog != null && !transactionAlertDialog.isShowing()) {
-                    transactionAlertDialog.show();
-                } else {
-                    displayTransactionPopup();
-                }
-                handler.post(doStartTransaction);
-            } else {
-                Toast.makeText(getActivity(), "Connect Reader First", Toast.LENGTH_LONG).show();
-            }
+
+    ClearentResponse startTransaction() {
+
+        runningPayment = true;
+        String amount = paymentViewModel.getPaymentAmount().getValue();
+
+        ClearentPaymentRequest clearentPaymentRequest = new ClearentPaymentRequest(Double.valueOf(amount), 0.00, 0, 60, null);
+
+        clearentPaymentRequest.setEmailAddress(paymentViewModel.getCustomerEmailAddress().getValue());
+
+
+        ReaderInterfaceMode readerInterfaceMode;
+        boolean reader2In1Mode = settingsViewModel.getEnable2In1Mode().getValue();
+        if (reader2In1Mode) {
+            readerInterfaceMode = ReaderInterfaceMode.CLEARENT_READER_INTERFACE_2_IN_1;
+        } else {
+            readerInterfaceMode = ReaderInterfaceMode.CLEARENT_READER_INTERFACE_3_IN_1;
         }
-    };
 
-    private Runnable doRegisterListen = new Runnable() {
-        public void run() {
-            cardReaderService.registerListen();
+        if (settingsAudioJackReader) {
+            AudioJack audiojack = new AudioJack(readerInterfaceMode);
+            return cardReaderService.startTransaction(clearentPaymentRequest, audiojack);
+        } else {
+            return cardReaderService.startTransaction(clearentPaymentRequest, getBluetooth(readerInterfaceMode));
         }
-    };
 
-    private Runnable doStartTransaction = new Runnable() {
-        @Override
-        public void run() {
-            String amount = paymentViewModel.getPaymentAmount().getValue();
-            ClearentPaymentRequest clearentPaymentRequest = new ClearentPaymentRequest(Double.valueOf(amount), 0.00, 0, 60, null);
-            clearentPaymentRequest.setEmailAddress(paymentViewModel.getCustomerEmailAddress().getValue());
+    }
 
-            int ret = 0;
-            if (enable2In1Mode) {
-                ret = cardReaderService.emv_startTransaction(clearentPaymentRequest);
-            } else {
-                ret = cardReaderService.device_startTransaction(clearentPaymentRequest);
-            }
-            if (ret == ErrorCode.NO_CONFIG) {
-                addPopupMessage(transactionAlertDialog, "Reader is not configured");
-                handler.post(doEnableButtons);
-                handler.post(doUpdateStatus);
-            } else if (ret == ErrorCode.SUCCESS || ret == ErrorCode.RETURN_CODE_OK_NEXT_COMMAND) {
-                runningTransaction = true;
-                addPopupMessage(transactionAlertDialog, "Please tap, insert, or swipe...");
-            } else if (cardReaderService.device_setDeviceType(DEVICE_TYPE.DEVICE_VP3300_AJ)) {
-                addPopupMessage(transactionAlertDialog, "Failed to start transaction. Check for low battery amber light or reconnect reader");
-                handler.post(doEnableButtons);
-                handler.post(doUpdateStatus);
-            } else if (!cardReaderService.device_isConnected() && cardReaderService.device_setDeviceType(DEVICE_TYPE.DEVICE_VP3300_BT)) {
-                addPopupMessage(transactionAlertDialog, "Card reader not connected. Press button on reader and try again");
-                handler.post(doEnableButtons);
-            } else {
-                addPopupMessage(transactionAlertDialog, "Failed to start transaction. Cancel and try again");
-                info = "cannot swipe/tap card\n";
-                info += "Status: " + cardReaderService.device_getResponseCodeString(ret) + "";
-                handler.post(doEnableButtons);
-                handler.post(doUpdateStatus);
-            }
+    private Bluetooth getBluetooth(ReaderInterfaceMode readerInterfaceMode) {
+
+        Bluetooth bluetooth;
+        boolean connectToFirstFound = settingsViewModel.getConnectToFirstBluetooth().getValue();
+        boolean searchBluetooth = settingsViewModel.getSearchBluetooth().getValue();
+        String bluetoothFriendlyName = settingsViewModel.getBluetoothFriendlyName().getValue();
+        String last5 = settingsViewModel.getLast5OfBluetoothReader().getValue();
+
+        if(connectToFirstFound) {
+            bluetooth = new Bluetooth(readerInterfaceMode, BluetoothSearchType.CONNECT_TO_FIRST_FOUND);
+        } else if(searchBluetooth){
+            bluetooth = new Bluetooth(readerInterfaceMode,BluetoothSearchType.SEARCH_ONLY);
+        } else if(bluetoothFriendlyName != null) {
+            bluetooth = new Bluetooth(readerInterfaceMode,BluetoothSearchType.FRIENDLY_NAME, bluetoothFriendlyName);
+        } else if(last5 != null) {
+            bluetooth = new Bluetooth(readerInterfaceMode,BluetoothSearchType.LAST_5_OF_DEVICE_SERIAL_NUMBER, last5);
+        } else {
+            bluetooth = new Bluetooth(readerInterfaceMode,BluetoothSearchType.CONNECT_TO_FIRST_FOUND);
         }
-    };
+        return bluetooth;
 
+    }
 
     @Override
     public String getPaymentsBaseUrl() {
         if (settingsProdEnvironment) {
-           return Constants.PROD_BASE_URL;
+            return Constants.PROD_BASE_URL;
         }
         return Constants.SB_BASE_URL;
     }
@@ -661,56 +589,39 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
         return Constants.SB_PUBLIC_KEY;
     }
 
-    @Override
-    public void handle(BluetoothDevice bluetoothDevice) {
-        BluetoothLEController.setBluetoothDevice(bluetoothDevice);
-        handler.post(doRegisterListen);
-    }
-
-    @Override
-    public void handle(BluetoothScanMessage bluetoothScanMessage) {
-        if(!BluetoothScanMessage.SCAN_STOPPED.equals(bluetoothScanMessage)) {
-            addPopupMessage(transactionAlertDialog, bluetoothScanMessage.getDisplayMessage());
-        }
-    }
-
     public class SwipeButtonListener implements View.OnClickListener {
+
         public void onClick(View arg0) {
 
             updateModelFromView();
             runningManualEntry = false;
+            runningPayment = false;
 
             if (cardReaderService == null) {
                 initCardReaderService();
             }
 
-            closePopup();
+            String amount = paymentViewModel.getPaymentAmount().getValue();
 
-            if (isManualCardEntry()) {
+            if (amount == null || "".equals(amount)) {
+                Toast.makeText(getActivity(), "Amount Required", Toast.LENGTH_LONG).show();
+            } else if (isManualCardEntry()) {
                 runningManualEntry = true;
                 displayTransactionPopup();
                 CreditCard creditCard = manualEntryService.createCreditCard(paymentViewModel.getCardNumber().getValue(), paymentViewModel.getCardExpirationDate().getValue(), paymentViewModel.getCardCVV().getValue());
                 manualEntryService.createTransactionToken(creditCard);
-            } else if (cardReaderService.device_isConnected()) {
-                String amount = paymentViewModel.getPaymentAmount().getValue();
-                if (amount == null || "".equals(amount)) {
-                    Toast.makeText(getActivity(), "Amount Required", Toast.LENGTH_LONG).show();
-                } else {
-                    handler.post(doSwipeProgressBar);
-                }
-            } else if (!cardReaderService.device_isConnected()) {
+            } else {
                 displayTransactionPopup();
-                if (settingsBluetoothReader) {
-                    bluetoothLeService.scan(Constants.BLUETOOTH_READER_PREFIX + "-" + last5OfBluetoothReader);
+                if (settingsBluetoothReader || settingsBluetoothReaderUsb) {
                     Toast.makeText(getActivity(), "Connecting Bluetooth Reader Ending In " + last5OfBluetoothReader, Toast.LENGTH_LONG).show();
                 } else if (settingsAudioJackReader) {
-                    handler.post(doRegisterListen);
-                    cardReaderService.device_configurePeripheralAndConnect();
                     Toast.makeText(getActivity(), "Connecting Audio Jack Reader", Toast.LENGTH_LONG).show();
                 }
-            } else {
-                Toast.makeText(getActivity(), "Connect Reader First", Toast.LENGTH_LONG).show();
+
+                startTransaction();
+
             }
+
         }
     }
 
@@ -722,9 +633,13 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
     }
 
     private void initCardReaderService() {
+
         ReaderInfo.DEVICE_TYPE device_type = ReaderInfo.DEVICE_TYPE.DEVICE_VP3300_BT;
+
         if (settingsAudioJackReader) {
             device_type = ReaderInfo.DEVICE_TYPE.DEVICE_VP3300_AJ;
+        } else if (settingsBluetoothReaderUsb) {
+            device_type = DEVICE_TYPE.DEVICE_VP3300_BT_USB;
         }
 
         String baseUrl = Constants.SB_BASE_URL;
@@ -748,42 +663,38 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
     }
 
     public void deviceConnected() {
-        System.out.println("device connected");
-    }
-
-    public void deviceDisconnected() {
+        Log.d("WATCH", "thread in deviceConnected" + Thread.currentThread().getName());
+        updateReaderConnected("Reader Ready ❤️");
         getActivity().runOnUiThread(new Runnable() {
             public void run() {
-                if (transactionAlertDialog != null && transactionAlertDialog.isShowing()) {
-                    addPopupMessage(transactionAlertDialog, "Bluetooth disconnected. Press button on reader.");
+                if(transactionAlertDialog != null && runningPayment) {
+                    transactionAlertDialog.show();
                 }
             }
         });
-        updateReaderConnected("Reader Disconnected ❌");
 
-        isReady = false;
+    }
+
+    public void deviceDisconnected() {
+        runningPayment = false;
+        Log.d("WATCH", "thread in deviceDisconnected" + Thread.currentThread().getName());
+        updateReaderConnected("Reader Disconnected ❌");
     }
 
     public void timeout(int errorCode) {
-        info += ErrorCodeInfo.getErrorCodeDescription(errorCode);
         handler.post(showTimeout);
     }
 
     private Runnable showTimeout = new Runnable() {
         public void run() {
-            if (transactionAlertDialog != null && transactionAlertDialog.isShowing()) {
-                addPopupMessage(transactionAlertDialog, "Timed out");
-            }
+
+            addPopupMessage(transactionAlertDialog, "Timed out");
+
         }
     };
 
     public void ICCNotifyInfo(byte[] dataNotify, String strMessage) {
-        if (strMessage != null && strMessage.length() > 0) {
-            String strHexResp = Common.getHexStringFromBytes(dataNotify);
-
-            info += "ICC Notification Info: " + strMessage + "\n" + "Resp: " + strHexResp;
-            handler.post(doUpdateStatus);
-        }
+        //demo does not use this
     }
 
     public void msgToConnectDevice() {
@@ -791,8 +702,7 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
     }
 
     public void msgAudioVolumeAdjustFailed() {
-        info += "SDK could not adjust volume...";
-        handler.post(doUpdateStatus);
+        //demo does not use this
     }
 
 
@@ -802,8 +712,7 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
 
 
     public void LoadXMLConfigFailureInfo(int index, String strMessage) {
-        info += "XML loading error...";
-        handler.post(doUpdateStatus);
+        //demo does not use this
     }
 
     public void dataInOutMonitor(byte[] data, boolean isIncoming) {
@@ -826,9 +735,69 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
 
     }
 
+    @Override
+    public void bluetoothDevices(List<BluetoothDevice> list) {
+        //TODO do something with bluetooth devices
+    }
+
+    @Override
+    public void feedback(final ClearentFeedback clearentFeedback) {
+        Log.d("WATCH", "thread in feedback" + Thread.currentThread().getName());
+        getActivity().runOnUiThread(new Runnable() {
+            public void run() {
+
+        if(clearentFeedback == null) {
+            Log.i("CLEARENTFEEDBACK", "null");
+        } else if (transactionAlertDialog != null && transactionAlertDialog.isShowing()) {
+            if (clearentFeedback.getMessage().contains("TIME OUT")) {
+                handler.post(doEnableButtons);
+            }
+            addFeedbackToPopup(transactionAlertDialog, clearentFeedback);
+        } else {
+            Log.d("FAIL"," dialog not initialized");
+        }
+            }
+        });
+    }
+
+    private void addFeedbackToPopup(final AlertDialog alertDialog, final ClearentFeedback clearentFeedback) {
+
+        Handler handler = new Handler(Looper.getMainLooper());
+        Log.d("THREADING", handler.getLooper().getThread().getName());
+        handler.post(new Runnable() {
+            public void run() {
+                if (alertDialog != null && alertDialog.isShowing()) {
+                    TextView textView = (TextView) alertDialog.findViewById(R.id.popupMessages);
+                    if (textView == null) {
+                        return;
+                    }
+                    if (clearentFeedback.getFeedbackType() == FeedbackType.FEEDBACK_USER_ACTION) {
+                        textView.append(clearentFeedback.getMessage() + "\n");
+                    } else if (clearentFeedback.getFeedbackType() == FeedbackType.FEEDBACK_INFO) {
+                        textView.append("    " + clearentFeedback.getMessage() + "\n");
+                    } else if (clearentFeedback.getFeedbackType() == FeedbackType.FEEDBACK_ERROR) {
+                        textView.append(clearentFeedback.getMessage() + "\n");
+                    } else {
+                        textView.append("" + clearentFeedback.getMessage() + "\n");
+                    }
+                }
+            }
+        });
+
+    }
+
+
     public void msgBatteryLow() {
+        getActivity().runOnUiThread(new Runnable() {
+            public void run() {
+                if (transactionAlertDialog != null && transactionAlertDialog.isShowing()) {
+                    addPopupMessage(transactionAlertDialog, "BATTERY IS LOW");
+                }
+            }
+        });
         Toast.makeText(getActivity(), "LOW BATTERY", Toast.LENGTH_LONG).show();
     }
+
 }
 
 

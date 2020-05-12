@@ -5,6 +5,8 @@ import android.content.Context;
 import com.clearent.Constants;
 import com.clearent.idtech.android.PublicOnReceiverListener;
 import com.clearent.idtech.android.domain.ClearentPaymentRequest;
+import com.clearent.idtech.android.domain.ClearentResponse;
+import com.clearent.idtech.android.domain.connection.Connection;
 import com.clearent.idtech.android.family.ApplicationContext;
 import com.clearent.idtech.android.family.DeviceFactory;
 import com.clearent.idtech.android.family.reader.VP3300;
@@ -103,4 +105,27 @@ public class CardReaderService {
     public void addRemoteLogRequest(String clientSoftwareVersion, String message) {
         device.addRemoteLogRequest(clientSoftwareVersion, message);
     }
+
+    public ClearentResponse startTransaction(ClearentPaymentRequest clearentPaymentRequest, Connection connection) {
+        return  device.startTransaction(clearentPaymentRequest, connection);
+    }
+
+    public void startConnection(Connection connection) {
+        device.startConnection(connection);
+    }
+
+    public String getFirmware() {
+        StringBuilder sb = new StringBuilder();
+        device.device_getFirmwareVersion(sb);
+        return sb.toString();
+    }
+
+    public String getDeviceSerialNumber() {
+        return device.getDeviceSerialNumber();
+    }
+
+    public void unpairBluetooth() {
+        device.disconnectBluetooth();
+    }
+
 }

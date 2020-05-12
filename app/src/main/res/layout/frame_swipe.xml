@@ -14,7 +14,7 @@ android:layout_height="fill_parent">
 
 
     <ScrollView
-        android:layout_width="300dp"
+        android:layout_width="match_parent"
         android:layout_height="100dp">
 
         <LinearLayout
@@ -32,8 +32,8 @@ android:layout_height="fill_parent">
                 android:layout_marginLeft="25dp"
                 android:fontFamily="sans-serif-light"
                 android:textStyle="bold"
-                android:maxLines="5"
-                android:minLines="5" />
+                android:maxLines="10"
+                android:minLines="10" />
         </LinearLayout>
     </ScrollView>
 

@@ -3,8 +3,10 @@ package com.clearent.ui.settings;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothDevice;
 import android.content.DialogInterface;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -48,6 +50,9 @@ public class SettingsFragment extends Fragment implements PublicOnReceiverListen
     private Button configureReaderButton;
     private Button selectBluetoothDeviceButton;
     private Button unPairBluetoothDeviceButton;
+    private Button feelingLuckyBluetoothDeviceButton;
+    private Button scanBluetoothDeviceButton;
+    private Button configureAudioButton;
 
     private AlertDialog configurationDialog;
 
@@ -74,6 +79,7 @@ public class SettingsFragment extends Fragment implements PublicOnReceiverListen
     private CardReaderService cardReaderService;
     private boolean okayToConfigure = false;
     private boolean configuring = false;
+    private boolean audioJackConfiguring = false;
     private String currentFirmwareVersion;
     private String currentDeviceSerialNumber;
     private Spinner spinner;
@@ -114,7 +120,6 @@ public class SettingsFragment extends Fragment implements PublicOnReceiverListen
         spinner.setOnItemSelectedListener(this);
 
         updateReaderConnected("Reader Disconnected ❌");
-
 
         return root;
     }
@@ -157,12 +162,12 @@ public class SettingsFragment extends Fragment implements PublicOnReceiverListen
 
         final CheckBox enable2In1ModeCheckbox = root.findViewById(R.id.enable2In1Mode);
         enable2In1ModeCheckbox.setChecked(settingsViewModel.getEnable2In1Mode().getValue());
-
-        final CheckBox searchBlueboothCheckbox = root.findViewById(R.id.searchBluetooth);
-        searchBlueboothCheckbox.setChecked(settingsViewModel.getSearchBluetooth().getValue());
-
-        final CheckBox connectToFirstFoundCheckbox = root.findViewById(R.id.connectToFirstBluetooth);
-        connectToFirstFoundCheckbox.setChecked(settingsViewModel.getConnectToFirstBluetooth().getValue());
+//
+//        final CheckBox searchBlueboothCheckbox = root.findViewById(R.id.searchBluetooth);
+//        searchBlueboothCheckbox.setChecked(settingsViewModel.getSearchBluetooth().getValue());
+//
+//        final CheckBox connectToFirstFoundCheckbox = root.findViewById(R.id.connectToFirstBluetooth);
+//        connectToFirstFoundCheckbox.setChecked(settingsViewModel.getConnectToFirstBluetooth().getValue());
     }
 
     public void onItemSelected(AdapterView<?> parent, View view,
@@ -218,6 +223,10 @@ public class SettingsFragment extends Fragment implements PublicOnReceiverListen
         configureReaderButton.setOnClickListener(new ConfigureReaderButtonListener());
         configureReaderButton.setEnabled(true);
 
+        configureAudioButton = (Button) root.findViewById(R.id.settings_configure_audio_button);
+        configureAudioButton.setOnClickListener(new ConfigureAudioButtonListener());
+        configureAudioButton.setEnabled(true);
+
         selectBluetoothDeviceButton = (Button) root.findViewById(R.id.settings_select_bluetooth_button);
         selectBluetoothDeviceButton.setOnClickListener(new SelectBluetoothReaderButtonListener());
         selectBluetoothDeviceButton.setEnabled(true);
@@ -226,36 +235,44 @@ public class SettingsFragment extends Fragment implements PublicOnReceiverListen
         unPairBluetoothDeviceButton.setOnClickListener(new UnpairBluetoothReaderButtonListener());
         unPairBluetoothDeviceButton.setEnabled(true);
 
+        feelingLuckyBluetoothDeviceButton = (Button) root.findViewById(R.id.settings_bluetooth_first_button);
+        feelingLuckyBluetoothDeviceButton.setOnClickListener(new FeelingLuckyBluetoothReaderButtonListener());
+        feelingLuckyBluetoothDeviceButton.setEnabled(true);
+
+        scanBluetoothDeviceButton = (Button) root.findViewById(R.id.settings_bluetooth_scan_button);
+        scanBluetoothDeviceButton.setOnClickListener(new ScanBluetoothReaderButtonListener());
+        scanBluetoothDeviceButton.setEnabled(true);
+
         final RadioGroup radioGroup = (RadioGroup) root.findViewById(R.id.settings_readers);
         final RadioButton audioJackReaderButton = root.findViewById(R.id.settings_audiojack_reader);
         final RadioButton bluetoothReaderButton = root.findViewById(R.id.settings_bluetooth_reader);
         final RadioButton bluetoothReaderUsbButton = root.findViewById(R.id.settings_bluetooth_reader_usb);
         final TextView bluetoothFriendlyView = root.findViewById(R.id.settings_bluetooth_friendlyname);
         final TextView last5View = root.findViewById(R.id.settings_last_five_of_reader);
-        final CheckBox searchBluetoothCheckBox = root.findViewById(R.id.searchBluetooth);
-        final CheckBox connectFirstFoundCheckBox = root.findViewById(R.id.connectToFirstBluetooth);
+//        final CheckBox searchBluetoothCheckBox = root.findViewById(R.id.searchBluetooth);
+//        final CheckBox connectFirstFoundCheckBox = root.findViewById(R.id.connectToFirstBluetooth);
         final TextView selectBluetoothReaderButton = root.findViewById(R.id.settings_select_bluetooth_button);
         radioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(RadioGroup group, int checkedId) {
                 if (audioJackReaderButton.isChecked()) {
-                    selectBluetoothReaderButton.setEnabled(false);
+                    // selectBluetoothReaderButton.setEnabled(false);
                     last5View.setEnabled(false);
-                    searchBluetoothCheckBox.setEnabled(false);
+                    //searchBluetoothCheckBox.setEnabled(false);
                     bluetoothFriendlyView.setEnabled(false);
-                    connectFirstFoundCheckBox.setEnabled(false);
+                    //connectFirstFoundCheckBox.setEnabled(false);
                 } else if (bluetoothReaderButton.isChecked()) {
-                    selectBluetoothReaderButton.setEnabled(true);
+                    //selectBluetoothReaderButton.setEnabled(true);
                     last5View.setEnabled(true);
                     bluetoothFriendlyView.setEnabled(true);
-                    searchBluetoothCheckBox.setEnabled(true);
-                    connectFirstFoundCheckBox.setEnabled(true);
+                    //searchBluetoothCheckBox.setEnabled(true);
+                    //connectFirstFoundCheckBox.setEnabled(true);
                 } else if (bluetoothReaderUsbButton.isChecked()) {
-                    selectBluetoothReaderButton.setEnabled(false);
+                    //selectBluetoothReaderButton.setEnabled(false);
                     last5View.setEnabled(true);
                     bluetoothFriendlyView.setEnabled(true);
-                    searchBluetoothCheckBox.setEnabled(true);
-                    connectFirstFoundCheckBox.setEnabled(true);
+                    //searchBluetoothCheckBox.setEnabled(true);
+                    //connectFirstFoundCheckBox.setEnabled(true);
                 }
             }
         });
@@ -359,7 +376,7 @@ public class SettingsFragment extends Fragment implements PublicOnReceiverListen
 
     @Override
     public void isReady() {
-       //deprecated
+        //deprecated
 
     }
 
@@ -398,7 +415,7 @@ public class SettingsFragment extends Fragment implements PublicOnReceiverListen
         }
     }
 
-    private void closePopup() {
+    private void closeConfigurationPopup() {
         if (configurationDialog != null) {
             configurationDialog.hide();
             TextView textView = (TextView) configurationDialog.findViewById(R.id.popupMessages);
@@ -427,16 +444,21 @@ public class SettingsFragment extends Fragment implements PublicOnReceiverListen
 
     @Override
     public void deviceConnected() {
-
         if (configuring && configurationDialog != null && configurationDialog.isShowing()) {
-            closePopup();
+            closeConfigurationPopup();
             cardReaderService.addRemoteLogRequest(Constants.getSoftwareTypeAndVersion(), "Configuration applied to reader " + cardReaderService.getStoredDeviceSerialNumberOfConfiguredReader());
             Toast.makeText(getActivity(), "\uD83D\uDC28 \uD83D\uDC28 \uD83D\uDC28 \uD83D\uDC28 \uD83D\uDC28 Configuration Applied \uD83D\uDC28 \uD83D\uDC28 \uD83D\uDC28 \uD83D\uDC28 \uD83D\uDC28", Toast.LENGTH_LONG).show();
         }
 
+        if (configurationDialog != null && configurationDialog.isShowing()) {
+            closeConfigurationPopup();
+            cardReaderService.addRemoteLogRequest(Constants.getSoftwareTypeAndVersion(), "Audio jack Configuration applied to reader " + cardReaderService.getStoredDeviceSerialNumberOfConfiguredReader());
+            Toast.makeText(getActivity(), "\uD83D\uDC28 \uD83D\uDC28 \uD83D\uDC28 \uD83D\uDC28 \uD83D\uDC28 Audio Configuration Applied \uD83D\uDC28 \uD83D\uDC28 \uD83D\uDC28 \uD83D\uDC28 \uD83D\uDC28", Toast.LENGTH_LONG).show();
+        }
+
         currentFirmwareVersion = cardReaderService.getFirmware();
         currentDeviceSerialNumber = cardReaderService.getDeviceSerialNumber();
-        if(currentDeviceSerialNumber != null) {
+        if (currentDeviceSerialNumber != null) {
             updateReaderConnected(currentDeviceSerialNumber + " Connected \uD83D\uDC9A️");
         } else {
             updateReaderConnected("Reader Connected \uD83D\uDC9A️");
@@ -473,7 +495,7 @@ public class SettingsFragment extends Fragment implements PublicOnReceiverListen
 
     @Override
     public void msgToConnectDevice() {
-        updateReaderConnected("Press Button ⚠️");
+       // updateReaderConnected("Press Button ⚠️");
     }
 
     @Override
@@ -498,17 +520,24 @@ public class SettingsFragment extends Fragment implements PublicOnReceiverListen
 
     @Override
     public void deviceConfigured() {
-        System.out.println("here");
+        Log.i("WATCH", "Device Configured");
+        if (audioJackConfiguring && configurationDialog != null && configurationDialog.isShowing()) {
+            closeConfigurationPopup();
+            cardReaderService.addRemoteLogRequest(Constants.getSoftwareTypeAndVersion(), "Audio jack Configuration applied to reader " + cardReaderService.getStoredDeviceSerialNumberOfConfiguredReader());
+            Toast.makeText(getActivity(), "\uD83D\uDC28 \uD83D\uDC28 \uD83D\uDC28 \uD83D\uDC28 \uD83D\uDC28 Audio Configuration Applied \uD83D\uDC28 \uD83D\uDC28 \uD83D\uDC28 \uD83D\uDC28 \uD83D\uDC28", Toast.LENGTH_LONG).show();
+        }
+        audioJackConfiguring = false;
+
     }
 
     @Override
     public void bluetoothDevices(List<BluetoothDevice> list) {
 
-        if(list != null && list.size() > 0) {
+        if (list != null && list.size() > 0) {
             scannedBluetoothDevices.clear();
             spinner.setVisibility(View.VISIBLE);
             spinnerText.setVisibility(View.VISIBLE);
-            for(BluetoothDevice bluetoothDevice:list) {
+            for (BluetoothDevice bluetoothDevice : list) {
                 scannedBluetoothDevices.add(bluetoothDevice.getName());
             }
             spinnerArrayAdapter.notifyDataSetChanged();
@@ -546,6 +575,38 @@ public class SettingsFragment extends Fragment implements PublicOnReceiverListen
         }
     }
 
+    public class ConfigureAudioButtonListener implements View.OnClickListener {
+        public void onClick(View arg0) {
+
+            audioJackConfiguring = false;
+            updateModelFromView();
+
+
+            if (cardReaderService == null) {
+                initCardReaderService();
+            }
+
+            if (isBluetoothReaderConfigured()) {
+                return;
+            }
+
+            displayConfigurationPopup();
+
+            //if (!cardReaderService.device_isConnected()) {
+              //  Toast.makeText(getActivity(), "Connect reader before applying audio configuration ", Toast.LENGTH_LONG).show();
+            //} else  {
+
+//                AsyncTask.execute(new Runnable() {
+//                    @Override
+//                    public void run() {
+                        applyAudioConfiguration();
+                  //  }
+               // });
+
+            //}
+        }
+    }
+
     public class SelectBluetoothReaderButtonListener implements View.OnClickListener {
         public void onClick(View arg0) {
 
@@ -560,12 +621,54 @@ public class SettingsFragment extends Fragment implements PublicOnReceiverListen
                 AudioJack audiojack = new AudioJack(ReaderInterfaceMode.CLEARENT_READER_INTERFACE_3_IN_1);
                 cardReaderService.startConnection(audiojack);
             } else {
-                cardReaderService.startConnection(getBluetooth());
+                cardReaderService.startConnection(getBluetooth(false, false));
             }
 
 
         }
     }
+
+    public class FeelingLuckyBluetoothReaderButtonListener implements View.OnClickListener {
+        public void onClick(View arg0) {
+
+            if (cardReaderService == null) {
+                initCardReaderService();
+            }
+
+            updateModelFromView();//why?
+            Toast.makeText(getActivity(), "Press button on reader(s)", Toast.LENGTH_LONG).show();
+
+            if (settingsAudioJackReader) {
+                AudioJack audiojack = new AudioJack(ReaderInterfaceMode.CLEARENT_READER_INTERFACE_3_IN_1);
+                cardReaderService.startConnection(audiojack);
+            } else {
+                cardReaderService.startConnection(getBluetooth(true, false));
+            }
+
+
+        }
+    }
+
+    public class ScanBluetoothReaderButtonListener implements View.OnClickListener {
+        public void onClick(View arg0) {
+
+            if (cardReaderService == null) {
+                initCardReaderService();
+            }
+
+            updateModelFromView();//why?
+            Toast.makeText(getActivity(), "Press button on reader(s)", Toast.LENGTH_LONG).show();
+
+            if (settingsAudioJackReader) {
+                AudioJack audiojack = new AudioJack(ReaderInterfaceMode.CLEARENT_READER_INTERFACE_3_IN_1);
+                cardReaderService.startConnection(audiojack);
+            } else {
+                cardReaderService.startConnection(getBluetooth(false, true));
+            }
+
+        }
+    }
+
 
     public class UnpairBluetoothReaderButtonListener implements View.OnClickListener {
         public void onClick(View arg0) {
@@ -574,20 +677,22 @@ public class SettingsFragment extends Fragment implements PublicOnReceiverListen
     }
 
 
-    private Bluetooth getBluetooth() {
+    private Bluetooth getBluetooth(boolean feelingLucky, boolean searchBluetooth) {
         ReaderInterfaceMode readerInterfaceMode = ReaderInterfaceMode.CLEARENT_READER_INTERFACE_3_IN_1;
-        boolean searchBluetooth = settingsViewModel.getSearchBluetooth().getValue();
         String bluetoothFriendlyName = settingsViewModel.getBluetoothFriendlyName().getValue();
         String last5 = settingsViewModel.getLast5OfBluetoothReader().getValue();
 
-        if(searchBluetooth) {
-            bluetooth = new Bluetooth(readerInterfaceMode,BluetoothSearchType.SEARCH_ONLY);
-        } else if(bluetoothFriendlyName != null && !"".equals(bluetoothFriendlyName)) {
-            bluetooth = new Bluetooth(readerInterfaceMode,BluetoothSearchType.FRIENDLY_NAME, bluetoothFriendlyName);
-        } else if(last5 != null && !"".equals(last5)) {
-            bluetooth = new Bluetooth(readerInterfaceMode,BluetoothSearchType.LAST_5_OF_DEVICE_SERIAL_NUMBER, last5);
+        if (feelingLucky) {
+            bluetooth = new Bluetooth(readerInterfaceMode, BluetoothSearchType.CONNECT_TO_FIRST_FOUND);
+        }
+        if (searchBluetooth) {
+            bluetooth = new Bluetooth(readerInterfaceMode, BluetoothSearchType.SEARCH_ONLY);
+        } else if (bluetoothFriendlyName != null && !"".equals(bluetoothFriendlyName)) {
+            bluetooth = new Bluetooth(readerInterfaceMode, BluetoothSearchType.FRIENDLY_NAME, bluetoothFriendlyName);
+        } else if (last5 != null && !"".equals(last5)) {
+            bluetooth = new Bluetooth(readerInterfaceMode, BluetoothSearchType.LAST_5_OF_DEVICE_SERIAL_NUMBER, last5);
         } else {
-            bluetooth = new Bluetooth(readerInterfaceMode,BluetoothSearchType.CONNECT_TO_FIRST_FOUND);
+            bluetooth = new Bluetooth(readerInterfaceMode, BluetoothSearchType.CONNECT_TO_FIRST_FOUND);
         }
         return bluetooth;
 
@@ -634,11 +739,11 @@ public class SettingsFragment extends Fragment implements PublicOnReceiverListen
         final TextView bluetoothFriendlyName = root.findViewById(R.id.settings_bluetooth_friendlyname);
         settingsViewModel.getBluetoothFriendlyName().setValue(bluetoothFriendlyName.getText().toString());
 
-        final CheckBox searchBluetoothCheckbox = root.findViewById(R.id.searchBluetooth);
-        settingsViewModel.getSearchBluetooth().setValue(searchBluetoothCheckbox.isChecked());
-
-        final CheckBox firstConnectFoundCheckbox = root.findViewById(R.id.connectToFirstBluetooth);
-        settingsViewModel.getConnectToFirstBluetooth().setValue(firstConnectFoundCheckbox.isChecked());
+//        final CheckBox searchBluetoothCheckbox = root.findViewById(R.id.searchBluetooth);
+//        settingsViewModel.getSearchBluetooth().setValue(searchBluetoothCheckbox.isChecked());
+//
+//        final CheckBox firstConnectFoundCheckbox = root.findViewById(R.id.connectToFirstBluetooth);
+//        settingsViewModel.getConnectToFirstBluetooth().setValue(firstConnectFoundCheckbox.isChecked());
 
     }
 
@@ -661,7 +766,31 @@ public class SettingsFragment extends Fragment implements PublicOnReceiverListen
             cardReaderService.applyClearentConfiguration();
         } else {
             if (configurationDialog.isShowing()) {
-                closePopup();
+                closeConfigurationPopup();
+            }
+        }
+    }
+
+    void applyAudioConfiguration() {
+        if (!isBluetoothReaderConfigured()) {
+            cardReaderService.setContactlessConfiguration(settingsViewModel.getConfigureContactless().getValue());
+            cardReaderService.setContactless(settingsViewModel.getEnableContactless().getValue());
+            cardReaderService.setAutoConfiguration(settingsViewModel.getConfigureContact().getValue());
+
+            if (settingsViewModel.getClearContactConfigurationCache().getValue()) {
+                cardReaderService.setReaderConfiguredSharedPreference(settingsViewModel.getClearContactConfigurationCache().getValue());
+            }
+            if (settingsViewModel.getClearContactlessConfigurationCache().getValue()) {
+                cardReaderService.setReaderContactlessConfiguredSharedPreference(settingsViewModel.getClearContactlessConfigurationCache().getValue());
+            }
+            audioJackConfiguring = true;
+
+            cardReaderService.addRemoteLogRequest(Constants.getSoftwareTypeAndVersion(), settingsViewModel.toString());
+            AudioJack audiojack = new AudioJack(ReaderInterfaceMode.CLEARENT_READER_INTERFACE_3_IN_1);
+            cardReaderService.applyAudioConfiguration(audiojack);
+        } else {
+            if (configurationDialog.isShowing()) {
+                closeConfigurationPopup();
             }
         }
     }
@@ -685,7 +814,12 @@ public class SettingsFragment extends Fragment implements PublicOnReceiverListen
             public void run() {
                 if (configurationDialog != null) {
                     configurationDialog.setTitle("Configuring Reader");
-                    addPopupMessage(configurationDialog, "Do not cancel, disconnect, or switch apps...");
+
+                    TextView textView = (TextView) configurationDialog.findViewById(R.id.popupMessages);
+                    if (textView != null) {
+                        textView.setText("");
+                    }
+
                     configurationDialog.show();
                 } else {
                     AlertDialog.Builder configurationViewBuilder = new AlertDialog.Builder(getActivity());
@@ -711,8 +845,6 @@ public class SettingsFragment extends Fragment implements PublicOnReceiverListen
 
                     configurationDialog = configurationViewBuilder.create();
 
-                    addPopupMessage(configurationDialog, "Do not cancel, disconnect, or switch apps...");
-
                     configurationDialog.show();
                 }
             }
@@ -724,6 +856,8 @@ public class SettingsFragment extends Fragment implements PublicOnReceiverListen
         boolean audioJackReaderEnabled = audioJackReader == 0 ? false : true;
         return !audioJackReaderEnabled;
     }
+
+
 
     private void initCardReaderService() {
 

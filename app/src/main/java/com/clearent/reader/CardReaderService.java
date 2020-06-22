@@ -30,6 +30,10 @@ public class CardReaderService {
         device.applyClearentConfiguration();
     }
 
+    public void applyAudioConfiguration(Connection connection) {
+        device.applyAudioConfiguration(connection);
+    }
+
     public String device_getResponseCodeString(int ret) {
         return device.device_getResponseCodeString(ret);
     }

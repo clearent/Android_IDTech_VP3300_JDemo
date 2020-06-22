@@ -10,26 +10,6 @@
         android:layout_height="match_parent">
 
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginTop="10dp"
-            android:layout_marginBottom="10dp"
-            android:orientation="horizontal">
-
-            <TextView
-                android:id="@+id/readerConnected"
-                android:layout_width="200dp"
-                android:layout_height="wrap_content"
-                android:text="Reader Disconnected" />
-            <TextView
-                android:id="@+id/firmware"
-                android:layout_width="275dp"
-                android:layout_height="wrap_content"
-                android:text="" />
-
-        </LinearLayout>
-
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -42,7 +22,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
                 android:padding="10dp"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="5dp"
                 android:layout_marginBottom="10dp"
                 android:text="General"
                 android:fontFamily="sans-serif-black"
@@ -68,7 +48,7 @@
 
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="80dp">
+                android:layout_marginTop="60dp">
 
                 <RadioButton
                     android:id="@+id/settings_sandbox_env"
@@ -126,7 +106,7 @@
 
             <Space
                 android:layout_width="match_parent"
-                android:layout_height="20dp" />
+                android:layout_height="10dp" />
 
 
             <LinearLayout
@@ -165,8 +145,8 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:tag="AUDIO_JACK_READER"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginBottom="10dp"
+                        android:layout_marginTop="5dp"
+                        android:layout_marginBottom="5dp"
                         android:buttonTint="@color/clearentGreen"
                         android:text="Audio Jack" />
 
@@ -177,8 +157,8 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:checked="true"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginBottom="10dp"
+                        android:layout_marginTop="5dp"
+                        android:layout_marginBottom="5dp"
                         android:buttonTint="@color/clearentGreen"
                         android:tag="BLUETOOTH_READER"
                         android:text="Bluetooth" />
@@ -191,37 +171,12 @@
                         android:layout_weight="1"
                         android:buttonTint="@color/clearentGreen"
                         android:checked="false"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginBottom="10dp"
+                        android:layout_marginTop="5dp"
+                        android:layout_marginBottom="5dp"
                         android:tag="BLUETOOTH_READER USB"
                         android:text="Bluetooth USB" />
 
                 </RadioGroup>
-
-
-
-                <CheckBox
-                    android:id="@+id/searchBluetooth"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="sans-serif-light"
-                    android:textStyle="bold"
-                    android:layout_marginTop="10dp"
-                    android:layout_marginBottom="10dp"
-                    android:buttonTint="@color/clearentGreen"
-                    android:text="Search Bluetooth" />
-
-
-                <CheckBox
-                    android:id="@+id/connectToFirstBluetooth"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="sans-serif-light"
-                    android:textStyle="bold"
-                    android:layout_marginTop="10dp"
-                    android:layout_marginBottom="10dp"
-                    android:buttonTint="@color/clearentGreen"
-                    android:text="Connect To First Bluetooth Found" />
 
 
                 <LinearLayout
@@ -308,11 +263,11 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
+                    android:layout_marginTop="20dp"
                     android:layout_marginLeft="10dp"
                     android:orientation="horizontal">
                 <Button
-                    android:id="@+id/settings_select_bluetooth_button"
+                    android:id="@+id/settings_bluetooth_scan_button"
                     android:layout_width="100dp"
                     android:layout_height="wrap_content"
                     android:layout_below="@+id/settings_readers"
@@ -320,8 +275,7 @@
                     android:backgroundTint="@color/clearentBlue"
                     android:drawableLeft="@drawable/ic_bluetooth"
                     android:background="@drawable/rounded_corner"
-                    android:text="Scan/Pair" />
-
+                    android:text="SCAN" />
 
 
                     <RelativeLayout
@@ -351,17 +305,72 @@
 
                     </RelativeLayout>
 
+                </LinearLayout>
+
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginLeft="10dp"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/settings_bluetooth_first_button"
+                        android:layout_width="100dp"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@+id/settings_readers"
+                        android:layout_gravity="center"
+                        android:backgroundTint="@color/clearentBlue"
+                        android:drawableLeft="@drawable/ic_bluetooth"
+                        android:background="@drawable/rounded_corner"
+                        android:text="Feeling Lucky" />
+
+                    <Button
+                        android:id="@+id/settings_select_bluetooth_button"
+                        android:layout_width="100dp"
+                        android:layout_marginLeft="10dp"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@+id/settings_readers"
+                        android:layout_gravity="center"
+                        android:backgroundTint="@color/clearentBlue"
+                        android:drawableLeft="@drawable/ic_bluetooth"
+                        android:background="@drawable/rounded_corner"
+                        android:text="Pair" />
+
+
                     <Button
                         android:id="@+id/settings_disconnect_bluetooth_button"
                         android:layout_width="100dp"
+                        android:layout_marginLeft="10dp"
                         android:layout_height="wrap_content"
                         android:backgroundTint="@color/clearentBlue"
                         android:drawableLeft="@drawable/ic_bluetooth"
                         android:background="@drawable/rounded_corner"
                         android:text="Unpair" />
 
+
                 </LinearLayout>
 
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginLeft="10dp"
+                    android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/readerConnected"
+                    android:layout_width="200dp"
+                    android:layout_height="wrap_content"
+                    android:text="Reader Disconnected" />
+                <TextView
+                    android:id="@+id/firmware"
+                    android:layout_width="275dp"
+                    android:layout_height="wrap_content"
+                    android:text="" />
+
+                </LinearLayout>
 
             </LinearLayout>
 
@@ -438,6 +447,7 @@
                     android:buttonTint="@color/clearentGreen"
                     android:text="Clear App Knowledge of Previous Contactless Configuration" />
 
+
                 <Button
                     android:id="@+id/settings_configure_reader_button"
                     android:layout_width="190dp"
@@ -449,9 +459,25 @@
                     android:background="@drawable/rounded_corner"
                     android:text="Configure Reader" />
 
+                <Space
+                    android:layout_width="match_parent"
+                    android:layout_height="5dp" />
+
+                <Button
+                    android:id="@+id/settings_configure_audio_button"
+                    android:layout_width="190dp"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/settings_configure_reader_button"
+                    android:layout_gravity="left"
+                    android:backgroundTint="@color/clearentBlue"
+                    android:drawableLeft="@drawable/ic_menu_manage"
+                    android:background="@drawable/rounded_corner"
+                    android:text="Configure Audio" />
+
             </LinearLayout>
 
-            <Space
+
+        <Space
                 android:layout_width="match_parent"
                 android:layout_height="5dp" />
 

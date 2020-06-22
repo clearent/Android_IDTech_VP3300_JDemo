@@ -19,6 +19,9 @@ public class SaleTransaction {
     @SerializedName("create-token")
     private String createToken;
 
+    @SerializedName("billing")
+    private Billing billing;
+
     public SaleTransaction(String amount) {
         this.amount = amount;
     }
@@ -61,5 +64,13 @@ public class SaleTransaction {
 
     public void setSoftwareTypeVersion(String softwareTypeVersion) {
         this.softwareTypeVersion = softwareTypeVersion;
+    }
+
+    public Billing getBilling() {
+        return billing;
+    }
+
+    public void setBilling(Billing billing) {
+        this.billing = billing;
     }
 }

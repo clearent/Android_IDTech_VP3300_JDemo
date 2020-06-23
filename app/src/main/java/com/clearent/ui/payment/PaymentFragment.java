@@ -756,6 +756,7 @@ public class SwipeButtonListener implements View.OnClickListener {
     @Override
     public void bluetoothDevices(List<BluetoothDevice> list) {
         //TODO do something with bluetooth devices
+
     }
 
     @Override

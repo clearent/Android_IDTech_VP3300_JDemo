@@ -2,4 +2,4 @@
 
 # Release Notes
 
-Uses the beta 126-2.0.0 clearent idtech jar
+Uses 'version 2' - clearent-idtech-android-137-2.0.0-beta.jar. This version takes control of bluetooth connectivity.

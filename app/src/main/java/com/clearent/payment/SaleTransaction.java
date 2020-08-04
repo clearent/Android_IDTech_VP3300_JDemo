@@ -19,6 +19,9 @@ public class SaleTransaction {
     @SerializedName("create-token")
     private String createToken;
 
+    @SerializedName("card-inquiry")
+    private String cardInquiry;
+
     @SerializedName("billing")
     private Billing billing;
 
@@ -72,5 +75,13 @@ public class SaleTransaction {
 
     public void setBilling(Billing billing) {
         this.billing = billing;
+    }
+
+    public String getCardInquiry() {
+        return cardInquiry;
+    }
+
+    public void setCardInquiry(String cardInquiry) {
+        this.cardInquiry = cardInquiry;
     }
 }

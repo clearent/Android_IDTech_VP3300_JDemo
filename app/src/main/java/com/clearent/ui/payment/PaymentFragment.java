@@ -3,8 +3,6 @@ package com.clearent.ui.payment;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothDevice;
 import android.content.DialogInterface;
-import android.media.MediaPlayer;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -39,8 +37,6 @@ import com.clearent.payment.receipt.PostReceiptImpl;
 import com.clearent.payment.PostPayment;
 import com.clearent.payment.PostPaymentImpl;
 import com.clearent.ui.settings.SettingsViewModel;
-import com.idtechproducts.device.IDT_Device;
-import com.idtechproducts.device.IDT_VP3300;
 import com.idtechproducts.device.ReaderInfo;
 import com.idtechproducts.device.ReaderInfo.DEVICE_TYPE;
 import com.idtechproducts.device.StructConfigParameters;
@@ -54,9 +50,15 @@ import java.util.List;
 
 public class PaymentFragment extends Fragment implements PublicOnReceiverListener, HasManualTokenizingSupport {
 
+
+    private static final String TRANSACTION_SUCCESS_PREFIX = "Transaction successful. Transaction Id:";
+    private static final String RECEIPT_SUCCESS_MESSAGE = "PostReceipt sent successfully";
+    private static final String TRANSACTION_FAILED_MESSAGE = "Transaction failed";
+
     private PaymentViewModel paymentViewModel;
     private SettingsViewModel settingsViewModel;
     private AlertDialog transactionAlertDialog;
+    private AlertDialog paymentResultDialog;
     private Handler handler = new Handler();
     private Button swipeButton;
 
@@ -99,6 +101,9 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
         bindButtons(root);
 
         updateReaderConnected("Reader Disconnected ❌");
+
+        createPaymentDialog();
+        createPaymentResultDialog();
 
         return root;
     }
@@ -195,6 +200,41 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
         });
     }
 
+    private void createPaymentDialog() {
+        AlertDialog.Builder transactionViewBuilder = new AlertDialog.Builder(getActivity());
+
+        View view = layoutInflater.inflate(R.layout.frame_swipe, viewGroup, false);
+        transactionViewBuilder.setView(view);
+
+        transactionViewBuilder.setCancelable(false);
+        transactionViewBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+
+            public void onClick(DialogInterface dialog, int which) {
+                cardReaderService.device_cancelTransaction();
+                clearPaymentPopupText();
+            }
+        });
+        transactionAlertDialog = transactionViewBuilder.create();
+        updatePaymentPopup();
+    }
+
+    private void updatePaymentPopup() {
+        if (runningManualEntry) {
+            transactionAlertDialog.setTitle("Processing card");
+            addPopupMessage(transactionAlertDialog, "");
+        } else {
+            transactionAlertDialog.setTitle("Processing payment");
+        }
+        clearPaymentPopupText();
+    }
+
+    private void clearPaymentPopupText() {
+        TextView textView = (TextView) transactionAlertDialog.findViewById(R.id.popupMessages);
+        if (textView != null) {
+            textView.setText("");
+        }
+    }
+
     private void bindButtons(View root) {
         swipeButton = (Button) root.findViewById(R.id.btn_swipeCard);
         swipeButton.setOnClickListener(new SwipeButtonListener());
@@ -275,31 +315,26 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
     }
 
     private void showPaymentSuccess(String message) {
+        paymentResultDialog.setMessage(message);
+        paymentResultDialog.show();
+
+    }
+
+    private void createPaymentResultDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setMessage(message)
+        builder.setMessage("")
                 .setCancelable(false)
                 .setPositiveButton("\uD83D\uDCB3 OK", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         //do things
                     }
                 });
-        AlertDialog alert = builder.create();
-        alert.show();
-
+        paymentResultDialog =  builder.create();
     }
 
     private void showPaymentFailed() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setMessage("Payment Failed")
-                .setCancelable(false)
-                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        //do things
-                    }
-                });
-        AlertDialog alert = builder.create();
-        alert.show();
-
+        paymentResultDialog.setMessage("Payment Failed");
+        paymentResultDialog.show();
     }
 
 
@@ -334,19 +369,19 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
 
     @Override
     public void handleManualEntryError(String message) {
-       addFeedbackToPopup(message);
+        addFeedbackToPopup(message);
     }
 
     @Override
     public void handleConfigurationErrors(String message) {
-        if(!runningPayment) {
+        if (!runningPayment) {
             handler.post(disablePopupWhenConfigurationFails);
         }
     }
 
     private Runnable disablePopupWhenConfigurationFails = new Runnable() {
         public void run() {
-            closePopup();
+            closePaymentPopup();
         }
     };
 
@@ -361,67 +396,29 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
         getActivity().runOnUiThread(new Runnable() {
             public void run() {
                 if (transactionAlertDialog != null) {
-                    if (runningManualEntry) {
-                        transactionAlertDialog.setTitle("Processing card");
-                        addPopupMessage(transactionAlertDialog, "");
-                    } else {
-                        transactionAlertDialog.setTitle("Processing payment");
-                    }
-                    transactionAlertDialog.show();
-                    TextView textView = (TextView) transactionAlertDialog.findViewById(R.id.popupMessages);
-                    if (textView != null) {
-                        textView.setText("");
-                    }
-                } else {
-                    AlertDialog.Builder transactionViewBuilder = new AlertDialog.Builder(getActivity());
+                    updatePaymentPopup();
+                }
+                transactionAlertDialog.show();
 
-                    if (runningManualEntry) {
-                        transactionViewBuilder.setTitle("Processing card");
-                        addPopupMessage(transactionAlertDialog, "");
-                    } else {
-                        transactionViewBuilder.setTitle("Processing payment");
-                    }
-
-                    View view = layoutInflater.inflate(R.layout.frame_swipe, viewGroup, false);
-                    transactionViewBuilder.setView(view);
-
-                    transactionViewBuilder.setCancelable(false);
-                    transactionViewBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-
-                        public void onClick(DialogInterface dialog, int which) {
-                            cardReaderService.device_cancelTransaction();
-                            TextView textView = (TextView) transactionAlertDialog.findViewById(R.id.popupMessages);
-                            if (textView != null) {
-                                textView.setText("");
-                            }
-                        }
-                    });
-                    transactionAlertDialog = transactionViewBuilder.create();
+                if (cardReaderService.device_isConnected()) {
                     transactionAlertDialog.show();
                 }
 
                 startTransaction();
+            }
+        });
+    }
 
-//                AsyncTask.execute(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        startTransaction();
-//                    }
-//                });
-        }
-    });
-}
 
-    private void closePopup() {
+    private void closePaymentPopup() {
 
         getActivity().runOnUiThread(new Runnable() {
             public void run() {
-                if (transactionAlertDialog != null) {
-                    TextView textView = (TextView) transactionAlertDialog.findViewById(R.id.popupMessages);
-                    if (textView != null) {
-                        textView.setText("");
+                if (transactionAlertDialog != null && !runningManualEntry) {
+                    clearPaymentPopupText();
+                    if (transactionAlertDialog.isShowing()) {
+                        transactionAlertDialog.hide();
                     }
-                    transactionAlertDialog.hide();
                 }
             }
         });
@@ -445,29 +442,30 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
     //TODO For the demo, keeping this in place to preserve the sample transaction and receipt logic
     public void lcdDisplay(int mode, final String[] lines, int timeout) {
         if (lines != null && lines.length > 0) {
-            // Log.i("CLEARENTLCD", lines[0]);
             getActivity().runOnUiThread(new Runnable() {
                 public void run() {
-                    if (transactionAlertDialog != null && transactionAlertDialog.isShowing()) {
-                        String checkTransactionMessage = "Transaction successful. Transaction Id:";
-                        String checkReceiptMessage = "PostReceipt sent successfully";
-                        String checkFailedTransactionFailed = "Transaction failed";
-                        if (lines[0].contains(checkFailedTransactionFailed)) {
-                            closePopup();
-                            paymentViewModel.setSuccessfulTransaction(false);
-                            showPaymentFailed();
-                        } else if (lines[0].contains(checkTransactionMessage)) {
 
-                            closePopup();
-                            paymentViewModel.setSuccessfulTransaction(true);
-                            showPaymentSuccess(lines[0]);
-                            runSampleReceipt(lines[0]);
-                        } else if (lines[0].contains(checkReceiptMessage)) {
+                    if (lines[0].contains(TRANSACTION_FAILED_MESSAGE)) {
+                        if (!runningManualEntry) {
+                            closePaymentPopup();
+                        }
+                        paymentViewModel.setSuccessfulTransaction(false);
+                        showPaymentFailed();
+                    } else if (lines[0].contains(TRANSACTION_SUCCESS_PREFIX)) {
+                        if (!runningManualEntry) {
+                            closePaymentPopup();
+                        }
+                        paymentViewModel.setSuccessfulTransaction(true);
+                        showPaymentSuccess(lines[0]);
+                        runSampleReceipt(lines[0]);
+                    } else if (lines[0].contains(RECEIPT_SUCCESS_MESSAGE)) {
 
-                            Toast.makeText(getActivity(), "Sent PostReceipt", Toast.LENGTH_LONG).show();
-                            closePopup();
+                        Toast.makeText(getActivity(), "Sent PostReceipt", Toast.LENGTH_LONG).show();
+                        if (!runningManualEntry) {
+                            closePaymentPopup();
                         }
                     }
+
                 }
             });
         }
@@ -540,9 +538,6 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
 
     ClearentResponse startTransaction() {
 
-        if (cardReaderService.device_isConnected()) {
-            transactionAlertDialog.show();
-        }
         transactionAlertMessages.setLength(0);
 
         runningPayment = true;
@@ -585,6 +580,8 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
         } else {
             bluetooth = new Bluetooth(readerInterfaceMode, BluetoothSearchType.CONNECT_TO_FIRST_FOUND);
         }
+        bluetooth.setNumberOfConnectionRetries(1);
+        bluetooth.setDelayIntervalInBetweenConnectionRetries(30000);
         return bluetooth;
 
     }
@@ -605,45 +602,45 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
         return Constants.SB_PUBLIC_KEY;
     }
 
-public class SwipeButtonListener implements View.OnClickListener {
+    public class SwipeButtonListener implements View.OnClickListener {
 
-    public void onClick(View arg0) {
+        public void onClick(View arg0) {
 
-        updateModelFromView();
-        runningManualEntry = false;
-        runningPayment = false;
+            updateModelFromView();
+            runningManualEntry = false;
+            runningPayment = false;
 
-        if (cardReaderService == null) {
-            initCardReaderService();
-        }
-
-        String amount = paymentViewModel.getPaymentAmount().getValue();
-
-        if (amount == null || "".equals(amount)) {
-            Toast.makeText(getActivity(), "Amount Required", Toast.LENGTH_LONG).show();
-        } else if (isManualCardEntry()) {
-            runningManualEntry = true;
-            CreditCard creditCard = manualEntryService.createCreditCard(paymentViewModel.getCardNumber().getValue(), paymentViewModel.getCardExpirationDate().getValue(), paymentViewModel.getCardCVV().getValue());
-            manualEntryService.createTransactionToken(creditCard);
-        } else {
-            if (settingsBluetoothReader || settingsBluetoothReaderUsb) {
-                if (cardReaderService.device_isConnected()) {
-                    Toast.makeText(getActivity(), "\uD83D\uDD17 Grab the reader with the quick flashing bluelight \uD83D\uDD17", Toast.LENGTH_LONG).show();
-                } else {
-                    Toast.makeText(getActivity(), "\uD83D\uDD75️ Press the button on the reader \uD83D\uDD75️", Toast.LENGTH_LONG).show();
-                }
-            } else if (settingsAudioJackReader) {
-                Toast.makeText(getActivity(), "Connecting Audio Jack Reader", Toast.LENGTH_LONG).show();
+            if (cardReaderService == null) {
+                initCardReaderService();
             }
 
-            displayPaymentPopup();
-            //handler.post(displayTransactionPopup);
+            String amount = paymentViewModel.getPaymentAmount().getValue();
+
+            if (amount == null || "".equals(amount)) {
+                Toast.makeText(getActivity(), "Amount Required", Toast.LENGTH_LONG).show();
+            } else if (isManualCardEntry()) {
+                runningManualEntry = true;
+                CreditCard creditCard = manualEntryService.createCreditCard(paymentViewModel.getCardNumber().getValue(), paymentViewModel.getCardExpirationDate().getValue(), paymentViewModel.getCardCVV().getValue());
+                manualEntryService.createTransactionToken(creditCard);
+            } else {
+                if (settingsBluetoothReader || settingsBluetoothReaderUsb) {
+                    if (cardReaderService.device_isConnected()) {
+                        Toast.makeText(getActivity(), "\uD83D\uDD17 Grab the reader with the quick flashing bluelight \uD83D\uDD17", Toast.LENGTH_LONG).show();
+                    } else {
+                        Toast.makeText(getActivity(), "\uD83D\uDD75️ Press the button on the reader \uD83D\uDD75️", Toast.LENGTH_LONG).show();
+                    }
+                } else if (settingsAudioJackReader) {
+                    Toast.makeText(getActivity(), "Connecting Audio Jack Reader", Toast.LENGTH_LONG).show();
+                }
+
+                displayPaymentPopup();
+                //handler.post(displayTransactionPopup);
+
+            }
 
         }
 
     }
-
-}
 
     private boolean isManualCardEntry() {
         if ((paymentViewModel.getCardNumber().getValue() != null && !"".equals(paymentViewModel.getCardNumber().getValue()))) {
@@ -767,9 +764,9 @@ public class SwipeButtonListener implements View.OnClickListener {
 
         Log.i("WATCH", transactionAlertMessages.toString());
 
-//        if (Thread.currentThread().getName().contains("AsyncTask")) {
-//            handler.post(addFeedbackToPopup);
-        if (Thread.currentThread().getName().equals("main")) {
+        if (Thread.currentThread().getName().contains("AsyncTask")) {
+            handler.post(addFeedbackToPopup);
+        } else if (Thread.currentThread().getName().equals("main")) {
             final TextView textView = (TextView) transactionAlertDialog.findViewById(R.id.popupMessages);
             textView.append(clearentFeedback.getMessage() + "\n");
         } else {
@@ -781,8 +778,8 @@ public class SwipeButtonListener implements View.OnClickListener {
     private void addFeedbackToPopup(final String message) {
         getActivity().runOnUiThread(new Runnable() {
             public void run() {
-               final TextView textView = (TextView) transactionAlertDialog.findViewById(R.id.popupMessages);
-               textView.append(message + "\n");
+                final TextView textView = (TextView) transactionAlertDialog.findViewById(R.id.popupMessages);
+                textView.append(message + "\n");
 
             }
         });

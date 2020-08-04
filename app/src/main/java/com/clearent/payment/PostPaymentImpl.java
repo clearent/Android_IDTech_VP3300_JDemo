@@ -20,6 +20,8 @@ public class PostPaymentImpl implements PostPayment {
         } else {
             saleTransaction = new SaleTransaction(amount);
         }
+        saleTransaction.setCreateToken("true");
+        saleTransaction.setCardInquiry("true");
         saleTransaction.setSoftwareType(Constants.SOFTWARE_TYPE);
         saleTransaction.setSoftwareTypeVersion(Constants.SOFTWARE_TYPE_VERSION);
         postTransactionRequest.setSaleTransaction(saleTransaction);

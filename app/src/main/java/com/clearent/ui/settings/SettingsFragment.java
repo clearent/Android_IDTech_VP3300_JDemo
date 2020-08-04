@@ -547,7 +547,17 @@ public class SettingsFragment extends Fragment implements PublicOnReceiverListen
 
     @Override
     public void feedback(ClearentFeedback clearentFeedback) {
-        //TODO sendfeedback
+
+        if (Thread.currentThread().getName().equals("main")) {
+            Toast.makeText(getActivity(), clearentFeedback.getMessage(), Toast.LENGTH_LONG).show();
+        } else {
+            Log.d("WATCH", "thread IS " + Thread.currentThread().getName());
+            Log.d("WATCH", "FEEDBACK IS " + clearentFeedback.getMessage());
+
+        }
+
+
+
     }
 
 

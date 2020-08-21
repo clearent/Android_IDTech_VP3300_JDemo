@@ -2,9 +2,7 @@
 
 # Android IDTech VP3300 Java Demo :iphone: :credit_card:
 
-:new: This demo shows a common way to interact with the clearent idtech framework.
-
-This demo uses our newest release ('version 2') that's in beta. We have not released it yet (soon).
+This demo shows a common way to interact with the clearent idtech framework. It uses our newest release ('version 2').
 
 The demo is broken down into two fragments - settings and payment. The settings fragment allows you to change settings used when you run a payment.
 It also let's you search for a bluetooth device, select it, and save it for future use. There is also an option to configure the reader. Configuration does

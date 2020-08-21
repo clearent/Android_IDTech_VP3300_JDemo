@@ -683,6 +683,7 @@ public class SettingsFragment extends Fragment implements PublicOnReceiverListen
     public class UnpairBluetoothReaderButtonListener implements View.OnClickListener {
         public void onClick(View arg0) {
             cardReaderService.unpairBluetooth();
+           // initCardReaderService();
         }
     }
 

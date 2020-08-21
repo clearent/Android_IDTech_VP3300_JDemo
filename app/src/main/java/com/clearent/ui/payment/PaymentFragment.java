@@ -312,6 +312,8 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
 
         PostTransactionRequest postTransactionRequest = postPayment.createPostTransactionRequest(transactionToken, paymentViewModel.getPaymentAmount().getValue(), apiKey, baseUrl);
         postPayment.doSale(postTransactionRequest, this);
+
+        //cardReaderService.unpairBluetooth();
     }
 
     private void showPaymentSuccess(String message) {
@@ -610,6 +612,11 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
             runningManualEntry = false;
             runningPayment = false;
 
+           // if (cardReaderService != null) {
+                //cardReaderService.unpairBluetooth();
+                cardReaderService = null;
+           // }
+
             if (cardReaderService == null) {
                 initCardReaderService();
             }
@@ -650,6 +657,8 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
     }
 
     private void initCardReaderService() {
+
+        //cardReaderService = null;
 
         ReaderInfo.DEVICE_TYPE device_type = ReaderInfo.DEVICE_TYPE.DEVICE_VP3300_BT;
 

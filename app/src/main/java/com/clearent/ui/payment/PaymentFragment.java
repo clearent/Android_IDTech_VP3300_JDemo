@@ -399,13 +399,13 @@ public class PaymentFragment extends Fragment implements PublicOnReceiverListene
             public void run() {
                 if (transactionAlertDialog != null) {
                     updatePaymentPopup();
-                }
-                transactionAlertDialog.show();
-
-                if (cardReaderService.device_isConnected()) {
                     transactionAlertDialog.show();
-                }
 
+                    if (cardReaderService.device_isConnected()) {
+                        transactionAlertDialog.show();
+                    }
+                }
+                
                 startTransaction();
             }
         });
